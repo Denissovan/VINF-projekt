@@ -48,7 +48,27 @@ public class ParsingProgram {
         //System.out.println("//////////////// Zacina volanie funkcie removeDuplicates //////////////");
 
         for (String s : listSet){
-            returnStr += s + "\n";
+            returnStr += s + "|";
+        }
+
+        //System.out.println("///////////////// Skoncilo volanie funkcie removeDuplicates ///////////////");
+        return returnStr;
+    }
+    public static String removeUnnecessary(String data){
+        String[] strs = data.split("\\|");
+        List<String> list = new ArrayList<String>(Arrays.asList(strs));
+        String returnStr = "";
+
+        //System.out.println("//////////////// Zacina volanie funkcie removeDuplicates //////////////");
+
+        Pattern p1 = Pattern.compile(".*((22-rdf-syntax-ns#type)|(base\\.type_ontology)).*");
+
+
+        for (String s : list){
+            Matcher m1 = p1.matcher(s);
+            if(!m1.matches()){
+                returnStr += s + "|";
+            }
         }
 
         //System.out.println("///////////////// Skoncilo volanie funkcie removeDuplicates ///////////////");
@@ -103,7 +123,7 @@ public class ParsingProgram {
 
 
                 if (m1.matches() ) {
-                    Key.set(lineID);
+                    Key.set(getAtributeFromLink(lineID));
                     context.write(Key, one);
                 }
 
@@ -150,7 +170,7 @@ public class ParsingProgram {
             if(documentLine.hasMoreTokens()){
                 line = documentLine.nextToken();
                 lineComponents = line.split("\t");
-                lineID = lineComponents[0];
+                lineID = getAtributeFromLink(lineComponents[0]);
 
 
                 if(!idInFile) {
@@ -161,7 +181,7 @@ public class ParsingProgram {
 
                 if(lineID.equals(movieID)){
                     Text id = new Text();
-                    value.set(lineComponents[1] + " " + lineComponents[2]);
+                    value.set(getAtributeFromLink(lineComponents[1]) + ":" + lineComponents[2]);
                     id.set(lineID);
                     context.write(id,value);
                     idInFile = true;
@@ -191,8 +211,9 @@ public class ParsingProgram {
             }
             //manage duplicates
             txt = removeDuplicates(txt);
+            txt = removeUnnecessary(txt);
 
-            txt = "\n[" + txt + "]\n";
+            txt = "=[" + txt + "]";
 
             textValue.set(txt);
             context.write(key, textValue);
@@ -222,27 +243,9 @@ public class ParsingProgram {
             // read line by line
             if(documentLine.hasMoreTokens()){
                 line = documentLine.nextToken();
-                lineComponents = line.split("\t");
-                lineID = lineComponents[0];
 
 
-                if(!idInFile) {
-                    if (containsID(lineID, fID)) {
-                        movieID = lineID;
-                    }
-                }
-
-                if(lineID.equals(movieID)){
-                    Text id = new Text();
-                    value.set(lineComponents[1] + " " + lineComponents[2]);
-                    id.set(lineID);
-                    context.write(id,value);
-                    idInFile = true;
-                }
-                else {
-                    idInFile = false;
-                }
-
+                System.out.println(line);
             }
 
 
@@ -308,22 +311,22 @@ public class ParsingProgram {
         job2.setOutputValueClass(Text.class);
         FileInputFormat.addInputPath(job2, new Path(args[0]));
         FileOutputFormat.setOutputPath(job2, new Path(args[3]));
-        System.exit(job2.waitForCompletion(true) ? 0 : 1);
-
+        //System.exit(job2.waitForCompletion(true) ? 0 : 1);
+        job2.waitForCompletion(true);
 
         Configuration conf3 = new Configuration();
         conf3.set("UnfilteredObjects", args[4]);
 
-        Job job3 = Job.getInstance(conf2, "object filter");
+        Job job3 = Job.getInstance(conf3, "object filter");
         job3.setJarByClass(ParsingProgram.class);
         job3.setMapperClass(MovieFilterMapper.class);
         //job.setCombinerClass(IntSumReducer.class);
-        job3.setReducerClass(MovieFilterReducer.class);
+        //job3.setReducerClass(MovieFilterReducer.class);
         job3.setMapOutputKeyClass(Text.class);
         job3.setMapOutputValueClass(Text.class);
         job3.setOutputKeyClass(Text.class);
         job3.setOutputValueClass(Text.class);
-        FileInputFormat.addInputPath(job3, new Path(args[0]));
+        FileInputFormat.addInputPath(job3, new Path(args[4]));
         FileOutputFormat.setOutputPath(job3, new Path(args[5]));
         System.exit(job3.waitForCompletion(true) ? 0 : 1);
 
