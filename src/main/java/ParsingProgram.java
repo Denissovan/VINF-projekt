@@ -171,9 +171,11 @@ public class ParsingProgram {
         private final Text value = new Text();
         String line = null;
         String lineID = null;
-        String movieID = null;
+        String baseID = null;
         String[] lineComponents;
-        boolean idInFile = false;
+        boolean equals = false;
+        boolean isMovie = false;
+        boolean firstToSet = true;
 
 
         public void map(Object key, Text Document, Context context) throws IOException, InterruptedException {
@@ -190,22 +192,38 @@ public class ParsingProgram {
                 lineComponents = line.split("\t");
                 lineID = getAtributeFromLink(lineComponents[0]);
 
-
-                if(!idInFile) {
-                    if (containsID(lineID, fID)) {
-                        movieID = lineID;
-                    }
+                if(firstToSet){
+                    baseID = lineID;
+                    firstToSet = false;
                 }
 
-                if(lineID.equals(movieID)){
-                    Text id = new Text();
-                    value.set(getAtributeFromLink(lineComponents[1]) + ":" + lineComponents[2]);
-                    id.set(lineID);
-                    context.write(id,value);
-                    idInFile = true;
+                // pokusit sa este doimplementovat to badID
+                if(!equals && !isMovie) {
+                    isMovie = containsID(lineID, fID); // if it contains true is asigned else false
+                }
+
+                if(lineID.equals(baseID)){
+                    if(isMovie) {
+                        Text id = new Text();
+                        // mam problem ze zapisujem o jeden dopredu a stracam ten prvy , treba si zapametat
+                        // predchadzajuci ...
+                        value.set(getAtributeFromLink(lineComponents[1]) + ":" + lineComponents[2]);
+                        id.set(lineID);
+                        context.write(id, value);
+                    }
+                    equals = true;
                 }
                 else {
-                    idInFile = false;
+                    firstToSet = true;
+                    equals = false;
+                    isMovie = containsID(lineID, fID);
+                    if(isMovie){
+                        Text id = new Text();
+                        value.set(getAtributeFromLink(lineComponents[1]) + ":" + lineComponents[2]);
+                        id.set(lineID);
+                        context.write(id, value);
+                    }
+                    //isMovie = false;
                 }
 
             }
