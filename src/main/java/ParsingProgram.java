@@ -93,6 +93,24 @@ public class ParsingProgram {
         }
         return false;
     }
+    public static  boolean containsName(String text){
+        String[] strs = text.split("\\|");
+        List<String> list = new ArrayList<String>(Arrays.asList(strs));
+
+
+        //System.out.println("//////////////// Zacina volanie funkcie removeDuplicates //////////////");
+
+        Pattern p1 = Pattern.compile(".*type.object.name.*");
+
+
+        for (String s : list){
+            Matcher m1 = p1.matcher(s);
+            if(m1.matches()){
+                return true;
+            }
+        }
+        return false;
+    }
 
     public static class MovieIdMapper extends Mapper<Object , Text, Text, IntWritable> {
 
@@ -215,8 +233,10 @@ public class ParsingProgram {
 
             txt = "=[" + txt + "]";
 
-            textValue.set(txt);
-            context.write(key, textValue);
+            if(containsName(txt)) {
+                textValue.set(txt);
+                context.write(key, textValue);
+            }
         }
     }
 
@@ -314,6 +334,7 @@ public class ParsingProgram {
         //System.exit(job2.waitForCompletion(true) ? 0 : 1);
         job2.waitForCompletion(true);
 
+        /*
         Configuration conf3 = new Configuration();
         conf3.set("UnfilteredObjects", args[4]);
 
@@ -329,7 +350,7 @@ public class ParsingProgram {
         FileInputFormat.addInputPath(job3, new Path(args[4]));
         FileOutputFormat.setOutputPath(job3, new Path(args[5]));
         System.exit(job3.waitForCompletion(true) ? 0 : 1);
-
+*/
     }
 
 }
