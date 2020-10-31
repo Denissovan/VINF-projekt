@@ -60,10 +60,10 @@ public class ParsingProgram {
         List<String> IDs = new ArrayList<>();
         List<String> objectNames = new ArrayList<>();
         List<String> aliases = new ArrayList<>();
-        String tvOrFilm = "#";
+        String tvOrFilm = "None";
         List<String> directedBy = new ArrayList<>();
-        String releaseDate = "#";
-        String description = "#";
+        String releaseDate = "None";
+        String description = "None";
         List<String> genres = new ArrayList<>();
         String delim = ",";
 
@@ -74,8 +74,8 @@ public class ParsingProgram {
 
         Pattern id_pat = Pattern.compile(".*((authority\\.imdb\\.title)|(wikipedia\\.en_id)|" +
                 "(authority\\.tvrage\\.series_numeric)|(imdb\\.topic\\.title_id)|(tv\\.tv_program\\.tvrage_id)|" +
-                "(authority\\.netflix\\.movie)|(source\\.(allocine\\.fr\\.film)|(daum\\.movieid)|(movist\\.mid))|" +
-                "(source\\.cineseoul\\.cinemaid)).*");
+                "(authority\\.netflix\\.movie)|(source\\.(allocine\\.fr\\.film)|(daum\\.movieid)|(movist\\.mid)" +
+                "(cineseoul\\.cinemaid)(kinopoisk\\.film))|(user\\.ovguide\\.tvdb_show_id)).*");
 
         Pattern objectName_pat = Pattern.compile(".*(type\\.object\\.name).*@en");
 
@@ -129,13 +129,19 @@ public class ParsingProgram {
             }
         }
 
-        String ids = String.join(delim, IDs);
-        String ob_names = String.join(delim, objectNames);
-        String al = String.join(delim, aliases);
-        String dir_by = String.join(delim, directedBy);
-        String gens = String.join(delim, genres);
+        String ids = "title_id{" + (IDs.isEmpty() ? "None" : String.join(delim, IDs)) + "}";
+        String ob_names = "names{" + (objectNames.isEmpty() ? "None" : String.join(delim, objectNames)) + "}";
+        String al = "aliases{" + (aliases.isEmpty() ?  "None" : String.join(delim, aliases)) + "}";
+        String dir_by = "directed_by{" + (directedBy.isEmpty() ? "None" : String.join(delim, directedBy)) + "}";
+        String gens = "genres{" + (genres.isEmpty() ? "None" : String.join(delim, genres)) + "}";
 
-        returnStr = ids + "|\n" + ob_names + "|\n" + al + "|\n" + dir_by + "|\n" + gens + "|\n" + description + "|\n"+
+        description = "description{" + description + "}";
+        tvOrFilm = "tv_or_film{" + tvOrFilm + "}";
+        releaseDate = "release_date{" + releaseDate + "}";
+
+
+        returnStr = ids + "|\n" + ob_names + "|\n" + al + "|\n" + dir_by + "|\n" + gens +
+                "|\n" + description + "|\n"+
                 tvOrFilm + "|\n" + releaseDate;
 
         //System.out.println("///////////////// Skoncilo volanie funkcie removeDuplicates ///////////////");
@@ -320,7 +326,7 @@ public class ParsingProgram {
                 txt = removeDuplicates(txt);
                 txt = getRelevantAtributes(txt);
 
-                txt = "=[" + txt + "]";
+                txt = "=[" + txt + "]\n";
 
                 textValue.set(txt);
                 context.write(key, textValue);

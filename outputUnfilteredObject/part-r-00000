@@ -1,0 +1,216 @@
+g.11b60qhx8c	=[title_id{ authority.imdb.title:"tt0465112", imdb.topic.title_id:"tt0465112"}|
+names{ type.object.name:"Baby-in-Arms"@en}|
+aliases{None}|
+directed_by{None}|
+genres{None}|
+description{ common.topic.description:"Baby-in-Arms is a comedy TV mini-series that premiered in 2000."@en}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/tv.tv_program>}|
+release_date{ tv.tv_program.air_date_of_first_episode:"2000"^^<http://www.w3.org/2001/XMLSchema#gYear>}]
+
+g.11b6jbqpt4	=[title_id{ wikipedia.en_id:"46672366"}|
+names{ type.object.name:"Madunnella"@en}|
+aliases{None}|
+directed_by{None}|
+genres{None}|
+description{None}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{None}]
+
+g.11b6t1scwz	=[title_id{ authority.imdb.title:"tt0300059", imdb.topic.title_id:"tt0300059", wikipedia.en_id:"9997908"}|
+names{ type.object.name:"José María y María José: Una pareja de hoy"@en}|
+aliases{None}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/g.11bc16p_ch>}|
+genres{ film.film.genre:<http://rdf.freebase.com/ns/m.02822>, film.film.genre:<http://rdf.freebase.com/ns/m.05p553>}|
+description{None}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{ film.film.initial_release_date:"1973"^^<http://www.w3.org/2001/XMLSchema#gYear>}]
+
+g.11b72sfrnb	=[title_id{None}|
+names{ type.object.name:"Rainbow Cat & Blue Rabbit: Legend of the Seven Swords"@en}|
+aliases{ common.topic.alias:"Rainbow Cat and Blue Rabbit: Legend of the Seven Swords"@en}|
+directed_by{None}|
+genres{ tv.tv_program.genre:<http://rdf.freebase.com/ns/m.095bb>}|
+description{None}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/tv.tv_program>}|
+release_date{ tv.tv_program.air_date_of_first_episode:"2006-09-05"^^<http://www.w3.org/2001/XMLSchema#date>}]
+
+g.11b768wtx5	=[title_id{None}|
+names{ type.object.name:"The History of the World Episode 10: The Discovery of Language"@en}|
+aliases{None}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/m.051p44>}|
+genres{None}|
+description{None}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{None}]
+
+g.11b769j941	=[title_id{None}|
+names{ type.object.name:"Rachel"@en}|
+aliases{None}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/m.0d992my>}|
+genres{ film.film.genre:<http://rdf.freebase.com/ns/m.02822>, film.film.genre:<http://rdf.freebase.com/ns/m.02hmvc>}|
+description{ common.topic.description:"Rachel is a 2006 drama, short film written and directed by Frédéric Mermoud."@en}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{ film.film.initial_release_date:"2006"^^<http://www.w3.org/2001/XMLSchema#gYear>}]
+
+g.11dyjp9rk	=[title_id{ user.ovguide.tvdb_show_id:"111361"}|
+names{ type.object.name:"Odmori se, zasluzio si"@en}|
+aliases{None}|
+directed_by{None}|
+genres{ tv.tv_program.genre:<http://rdf.freebase.com/ns/m.05p553>}|
+description{None}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/tv.tv_program>}|
+release_date{ tv.tv_program.air_date_of_first_episode:"2006-02-26"^^<http://www.w3.org/2001/XMLSchema#date>}]
+
+g.11dykndp1	=[title_id{ authority.tvrage.series_numeric:"18443", tv.tv_program.tvrage_id:"18443"}|
+names{ type.object.name:"Rakt på med K-G Bergström"@en}|
+aliases{None}|
+directed_by{None}|
+genres{None}|
+description{None}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/tv.tv_program>}|
+release_date{ tv.tv_program.air_date_of_first_episode:"2007-09-11"^^<http://www.w3.org/2001/XMLSchema#date>}]
+
+g.11x1nf8ll	=[title_id{ authority.imdb.title:"tt0348296", imdb.topic.title_id:"tt0348296"}|
+names{ type.object.name:"The Diligent Batman"@en}|
+aliases{ common.topic.alias:"Ein tüchtiger Offiziersbursche"@en, common.topic.alias:"Userdny denschtschik (D 0352)"@en}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/m.0gxrysr>}|
+genres{ film.film.genre:<http://rdf.freebase.com/ns/m.02hmvc>}|
+description{ common.topic.description:"The Diligent Batman is a 1908 comedy short film written and directed by N. Filippov."@en}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{ film.film.initial_release_date:"1908"^^<http://www.w3.org/2001/XMLSchema#gYear>}]
+
+g.11x1nk41_	=[title_id{ authority.imdb.title:"tt0100794", imdb.topic.title_id:"tt0100794", source.cineseoul.cinemaid:"28658", source.daum.movieid:"30890", source.movist.mid:"39314"}|
+names{ type.object.name:"Tokyo Heaven"@en}|
+aliases{ common.topic.alias:"Tokyo joku irasshaimase"@en, common.topic.alias:"Tôkyô jôkû irasshaimase"@en}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/m.07kfvr9>}|
+genres{ film.film.genre:<http://rdf.freebase.com/ns/m.02822>}|
+description{ common.topic.description:"Tokyo Heaven is a 1990 drama film written by Yuhei Enoki and directed by Shinji Sômai."@en}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{ film.film.initial_release_date:"1990-06-09"^^<http://www.w3.org/2001/XMLSchema#date>}]
+
+g.1203nd9vs	=[title_id{ authority.imdb.title:"tt0406559", imdb.topic.title_id:"tt0406559"}|
+names{ type.object.name:"Behibbuk wa ana kaman"@en}|
+aliases{None}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/m.0vt25pv>}|
+genres{None}|
+description{ common.topic.description:"Behibbuk wa ana kaman is a 2003 film written by Ayman Bahgat Kamar and directed by Muhammad al-Najjar."@en}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{ film.film.initial_release_date:"2003-11-26"^^<http://www.w3.org/2001/XMLSchema#date>}]
+
+g.120m19_s	=[title_id{ authority.imdb.title:"tt0227065", imdb.topic.title_id:"tt0227065"}|
+names{ type.object.name:"Misuta, Misesu, Misu Ronri"@en}|
+aliases{None}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/m.02pwjgj>}|
+genres{None}|
+description{ common.topic.description:"Misuta, Misesu, Misu Ronri is a drama film directed by Tatsumi Kumashiro."@en}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{ film.film.initial_release_date:"1980-12-20"^^<http://www.w3.org/2001/XMLSchema#date>}]
+
+g.120vn8_v	=[title_id{ authority.tvrage.series_numeric:"19998", tv.tv_program.tvrage_id:"19998"}|
+names{ type.object.name:"Wat Schat Je?"@en}|
+aliases{None}|
+directed_by{None}|
+genres{None}|
+description{None}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/tv.tv_program>}|
+release_date{ tv.tv_program.air_date_of_first_episode:"2008-09-07"^^<http://www.w3.org/2001/XMLSchema#date>}]
+
+g.1216x1hb	=[title_id{ authority.netflix.movie:"70047374", user.ovguide.tvdb_show_id:"274284"}|
+names{ type.object.name:"Saiyuki Reload Gunlock"@en}|
+aliases{ common.topic.alias:"Saiyuki Reload: Gunlock"@en}|
+directed_by{None}|
+genres{None}|
+description{None}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/tv.tv_program>}|
+release_date{ tv.tv_program.air_date_of_first_episode:"2004-04-01"^^<http://www.w3.org/2001/XMLSchema#date>}]
+
+g.121cgn68	=[title_id{None}|
+names{None}|
+aliases{None}|
+directed_by{None}|
+genres{None}|
+description{None}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{None}]
+
+g.121rjmpm	=[title_id{None}|
+names{ type.object.name:"Sarkhet onsa"@en}|
+aliases{None}|
+directed_by{None}|
+genres{None}|
+description{ common.topic.description:"Sarkhet onsa is a 2007 television series directed by Mohamed Al-Ghety."@en}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/tv.tv_program>}|
+release_date{ tv.tv_program.air_date_of_first_episode:"2007"^^<http://www.w3.org/2001/XMLSchema#gYear>}]
+
+g.1222z6yv	=[title_id{ authority.imdb.title:"tt0345164", imdb.topic.title_id:"tt0345164"}|
+names{ type.object.name:"Jesse James vs. Lokum Shekerov"@en}|
+aliases{ common.topic.alias:"Dzhesi Dzeyms sreshtu Lokum Shekerov"@en}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/m.04_0krz>}|
+genres{ film.film.genre:<http://rdf.freebase.com/ns/m.05p553>}|
+description{ common.topic.description:"Jesse James vs. Lokum Shekerov is a 1966 comedy film, written and directed by Rangel Vulchanov."@en}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{ film.film.initial_release_date:"1995-04-22"^^<http://www.w3.org/2001/XMLSchema#date>}]
+
+g.1226s95s	=[title_id{ authority.imdb.title:"tt0367211", imdb.topic.title_id:"tt0367211"}|
+names{ type.object.name:"And Love Returned"@en}|
+aliases{ common.topic.alias:"Waada el hub"@en}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/m.0b6h97j>}|
+genres{None}|
+description{ common.topic.description:"And Love Returned is a 1961 film directed by Fatin Abdel Wahab."@en}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{ film.film.initial_release_date:"1961"^^<http://www.w3.org/2001/XMLSchema#gYear>}]
+
+g.12288sf9	=[title_id{ authority.imdb.title:"tt0074146", authority.netflix.movie:"60025465", imdb.topic.title_id:"tt0074146", source.allocine.fr.film:"37103"}|
+names{ type.object.name:"Holy Year"@en}|
+aliases{None}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/m.07s39kc>}|
+genres{ film.film.genre:<http://rdf.freebase.com/ns/m.03q4nz>, film.film.genre:<http://rdf.freebase.com/ns/m.05p553>}|
+description{None}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{ film.film.initial_release_date:"1976"^^<http://www.w3.org/2001/XMLSchema#gYear>}]
+
+g.1228lzmc	=[title_id{None}|
+names{ type.object.name:"Cats under the Rain"@en}|
+aliases{ common.topic.alias:"Cats in the Rain"@en, common.topic.alias:"Katzen im Regen"@en, common.topic.alias:"Koski pod Dosdem"@en}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/m.0gx9_c_>}|
+genres{ film.film.genre:<http://rdf.freebase.com/ns/m.02hmvc>}|
+description{ common.topic.description:"Koski pod Dosdem (Cats in the Rain) is a 2001 animated short film directed by Alexey Demin."@en}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{ film.film.initial_release_date:"2001"^^<http://www.w3.org/2001/XMLSchema#gYear>}]
+
+g.122ktpyx	=[title_id{ authority.tvrage.series_numeric:"11062", tv.tv_program.tvrage_id:"11062"}|
+names{ type.object.name:"Bara no Jyujika"@en}|
+aliases{None}|
+directed_by{None}|
+genres{None}|
+description{None}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/tv.tv_program>}|
+release_date{ tv.tv_program.air_date_of_first_episode:"2002-10-10"^^<http://www.w3.org/2001/XMLSchema#date>}]
+
+g.122mq_1w	=[title_id{ authority.imdb.title:"tt0084165", imdb.topic.title_id:"tt0084165"}|
+names{ type.object.name:"Jamais avant le mariage"@en}|
+aliases{None}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/m.01zvx9>}|
+genres{ film.film.genre:<http://rdf.freebase.com/ns/m.05p553>}|
+description{ common.topic.description:"Jamais avant le mariage is a 1982 comedy film directed by Daniel Ceccaldi."@en}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{ film.film.initial_release_date:"1982"^^<http://www.w3.org/2001/XMLSchema#gYear>}]
+
+g.122z2rt1	=[title_id{ authority.tvrage.series_numeric:"16045", tv.tv_program.tvrage_id:"16045"}|
+names{ type.object.name:"Gakkou e Ikkou"@en}|
+aliases{None}|
+directed_by{None}|
+genres{None}|
+description{None}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/tv.tv_program>}|
+release_date{ tv.tv_program.air_date_of_first_episode:"1991-04-08"^^<http://www.w3.org/2001/XMLSchema#date>}]
+
+g.1233lt5_	=[title_id{ authority.imdb.title:"tt0089290", imdb.topic.title_id:"tt0089290", source.allocine.fr.film:"43269"}|
+names{ type.object.name:"L'homme aux yeux d'argent"@en}|
+aliases{None}|
+directed_by{ film.film.directed_by:<http://rdf.freebase.com/ns/m.0gdmvj>}|
+genres{ film.film.genre:<http://rdf.freebase.com/ns/m.02wtdps>, film.film.genre:<http://rdf.freebase.com/ns/m.0lsxr>}|
+description{ common.topic.description:"L'homme aux yeux d'argent is a 1986 crime drama film directed by Pierre Granier-Deferre."@en}|
+tv_or_film{ type.object.type:<http://rdf.freebase.com/ns/film.film>}|
+release_date{ film.film.initial_release_date:"1985-11-13"^^<http://www.w3.org/2001/XMLSchema#date>}]
+
