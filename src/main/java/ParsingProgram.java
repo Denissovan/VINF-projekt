@@ -54,22 +54,89 @@ public class ParsingProgram {
         //System.out.println("///////////////// Skoncilo volanie funkcie removeDuplicates ///////////////");
         return returnStr;
     }
-    public static String removeUnnecessary(String data){
+    public static String getRelevantAtributes(String data){
         String[] strs = data.split("\\|");
         List<String> list = new ArrayList<String>(Arrays.asList(strs));
+        List<String> IDs = new ArrayList<>();
+        List<String> objectNames = new ArrayList<>();
+        List<String> aliases = new ArrayList<>();
+        String tvOrFilm = "#";
+        List<String> directedBy = new ArrayList<>();
+        String releaseDate = "#";
+        String description = "#";
+        List<String> genres = new ArrayList<>();
+        String delim = ",";
+
+
         String returnStr = "";
 
         //System.out.println("//////////////// Zacina volanie funkcie removeDuplicates //////////////");
 
-        Pattern p1 = Pattern.compile(".*((22-rdf-syntax-ns#type)|(base\\.type_ontology)).*");
+        Pattern id_pat = Pattern.compile(".*((authority\\.imdb\\.title)|(wikipedia\\.en_id)|" +
+                "(authority\\.tvrage\\.series_numeric)|(imdb\\.topic\\.title_id)|(tv\\.tv_program\\.tvrage_id)|" +
+                "(authority\\.netflix\\.movie)|(source\\.(allocine\\.fr\\.film)|(daum\\.movieid)|(movist\\.mid))|" +
+                "(source\\.cineseoul\\.cinemaid)).*");
+
+        Pattern objectName_pat = Pattern.compile(".*(type\\.object\\.name).*@en");
+
+        Pattern alias_pat = Pattern.compile(".*(common\\.topic\\.alias).*");
+
+        Pattern tv_programOrFilm_pat = Pattern.compile(".*(type\\.object\\.type:<http://rdf\\.freebase\\.com/ns/" +
+                "(tv\\.tv_program>)|(film\\.film)).*");
+
+        Pattern directedBy_pat = Pattern.compile(".*(film\\.film\\.directed_by).*");
+
+        Pattern genre_pat = Pattern.compile(".*(((tv\\.tv_program)|( film\\.film))\\.genre).*");
+
+        Pattern description_pat = Pattern.compile(".*(common\\.topic\\.description).*");
+
+        Pattern releaseDate_pat = Pattern.compile(".*((film\\.film\\.initial_release_date)|(tv.tv_program.air_date_of_first_episode)).*");
 
 
         for (String s : list){
-            Matcher m1 = p1.matcher(s);
-            if(!m1.matches()){
-                returnStr += s + "|";
+            Matcher id_match = id_pat.matcher(s);
+            Matcher objectName_match = objectName_pat.matcher(s);
+            Matcher alias_match = alias_pat.matcher(s);
+            Matcher tv_programOrFilm_match = tv_programOrFilm_pat.matcher(s);
+            Matcher directedBy_match = directedBy_pat.matcher(s);
+            Matcher genre_match = genre_pat.matcher(s);
+            Matcher description_match = description_pat.matcher(s);
+            Matcher releaseDate_match = releaseDate_pat.matcher(s);
+
+            if(id_match.matches()){
+                IDs.add(s);
+            }
+            if(objectName_match.matches()){
+                objectNames.add(s);
+            }
+            if(alias_match.matches()){
+                aliases.add(s);
+            }
+            if(tv_programOrFilm_match.matches()){
+                tvOrFilm = s;
+            }
+            if(directedBy_match.matches()){
+                directedBy.add(s);
+            }
+            if(genre_match.matches()){
+                genres.add(s);
+            }
+            if(description_match.matches()){
+                description = s;
+            }
+            if(releaseDate_match.matches()){
+                releaseDate = s;
             }
         }
+
+        String ids = String.join(delim, IDs);
+        String ob_names = String.join(delim, objectNames);
+        String al = String.join(delim, aliases);
+        String dir_by = String.join(delim, directedBy);
+        String gens = String.join(delim, genres);
+
+        returnStr = ids + "|\n" + ob_names + "|\n" + al + "|\n" + dir_by + "|\n" + gens + "|\n" + description + "|\n"+
+                tvOrFilm + "|\n" + releaseDate;
 
         //System.out.println("///////////////// Skoncilo volanie funkcie removeDuplicates ///////////////");
         return returnStr;
@@ -94,13 +161,13 @@ public class ParsingProgram {
         return false;
     }
     public static  boolean containsName(String text){
-        String[] strs = text.split("\\|");
+        String[] strs = text.split("\n");
         List<String> list = new ArrayList<String>(Arrays.asList(strs));
 
 
         //System.out.println("//////////////// Zacina volanie funkcie removeDuplicates //////////////");
 
-        Pattern p1 = Pattern.compile(".*type.object.name.*");
+        Pattern p1 = Pattern.compile(".*type\\.object\\.name.*");
 
 
         for (String s : list){
@@ -245,13 +312,16 @@ public class ParsingProgram {
                 txt = txt + " " + val;
                 txt += "|";
             }
-            //manage duplicates
-            txt = removeDuplicates(txt);
-            txt = removeUnnecessary(txt);
 
-            txt = "=[" + txt + "]";
 
             if(containsName(txt)) {
+
+                //manage duplicates
+                txt = removeDuplicates(txt);
+                txt = getRelevantAtributes(txt);
+
+                txt = "=[" + txt + "]";
+
                 textValue.set(txt);
                 context.write(key, textValue);
             }
