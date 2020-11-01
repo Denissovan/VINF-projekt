@@ -54,6 +54,50 @@ public class ParsingProgram {
         //System.out.println("///////////////// Skoncilo volanie funkcie removeDuplicates ///////////////");
         return returnStr;
     }
+    public static String parseIDs(){
+
+        return  "";
+    }
+    public static String parseNames(String name){
+        String[] nameParts = name.split("@");
+
+        return  nameParts[0].split(":")[1];
+    }
+    public static String parseAliases(String alias){
+        String[] aliasParts = alias.split("@");
+
+        return  aliasParts[0].split(":")[1];
+    }
+    public static String parseDirectedBys(String directedBy){
+        directedBy = directedBy.replaceAll(">", "");
+        String[] directedByParts = directedBy.split("/");
+        return  directedByParts[directedByParts.length-1];
+    }
+    public static String parseGenres(String genre){
+        genre = genre.replaceAll(">", "");
+        String[] genreParts = genre.split("/");
+        return  genreParts[genreParts.length-1];
+    }
+    public static String parseDescription(String description){
+        String[] descriptionParts = description.split("@");
+
+        return  descriptionParts[0].split(":")[1];
+    }
+    public static String parseTvOrFilm(String tv_or_film){
+        tv_or_film = tv_or_film.replaceAll(">", "");
+        String[] tv_filmParts = tv_or_film.split("/");
+        return  tv_filmParts[tv_filmParts.length-1];
+    }
+    public static String parseReleasDate(String release_date){
+
+        String[] dateParts = release_date.split("\\^\\^");
+        //String date = dateParts[0].split(":")[1];
+
+        return  dateParts[0].split(":")[1];
+    }
+
+
+
     public static String getRelevantAtributes(String data){
         String[] strs = data.split("\\|");
         List<String> list = new ArrayList<String>(Arrays.asList(strs));
@@ -68,7 +112,7 @@ public class ParsingProgram {
         String delim = ",";
 
 
-        String returnStr = "";
+        String returnStr;
 
         //System.out.println("//////////////// Zacina volanie funkcie removeDuplicates //////////////");
 
@@ -107,25 +151,25 @@ public class ParsingProgram {
                 IDs.add(s);
             }
             if(objectName_match.matches()){
-                objectNames.add(s);
+                objectNames.add(parseNames(s));
             }
             if(alias_match.matches()){
-                aliases.add(s);
+                aliases.add(parseAliases(s));
             }
             if(tv_programOrFilm_match.matches()){
-                tvOrFilm = s;
+                tvOrFilm = parseTvOrFilm(s);
             }
             if(directedBy_match.matches()){
-                directedBy.add(s);
+                directedBy.add(parseDirectedBys(s));
             }
             if(genre_match.matches()){
-                genres.add(s);
+                genres.add(parseGenres(s));
             }
             if(description_match.matches()){
-                description = s;
+                description = parseDescription(s);
             }
             if(releaseDate_match.matches()){
-                releaseDate = s;
+                releaseDate = parseReleasDate(s);
             }
         }
 
@@ -194,6 +238,7 @@ public class ParsingProgram {
         String lineID = null;
         String[] lineParts;
         String middlePart = null;
+        String lastPart = null;
 
         public void map(Object key, Text Document, Context context) throws IOException, InterruptedException {
 
@@ -208,12 +253,15 @@ public class ParsingProgram {
                 lineParts = line.split("\t");
                 lineID = lineParts[0];
                 middlePart = lineParts[1];
+                lastPart = lineParts[2];
 
                 Pattern p1 = Pattern.compile(".*((ns/film\\.film\\.)|(tv\\.tv_program\\.)).*");
                 Matcher m1 = p1.matcher(middlePart);
 
+                Pattern p2 = Pattern.compile(".*(/tv/tv_program/genre).*");
+                Matcher m2 = p2.matcher(lastPart);
 
-                if (m1.matches() ) {
+                if (m1.matches() || m2.matches()) {
                     Key.set(getAtributeFromLink(lineID));
                     context.write(Key, one);
                 }
