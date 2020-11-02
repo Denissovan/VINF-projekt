@@ -54,19 +54,18 @@ public class ParsingProgram {
         //System.out.println("///////////////// Skoncilo volanie funkcie removeDuplicates ///////////////");
         return returnStr;
     }
-    public static String parseIDs(){
-
-        return  "";
+    public static String parseIDs(String id){
+        return  id.replaceAll("\\+", ":");
     }
     public static String parseNames(String name){
         String[] nameParts = name.split("@");
 
-        return  nameParts[0].split(":")[1];
+        return  nameParts[0].split("\\+")[1];
     }
     public static String parseAliases(String alias){
         String[] aliasParts = alias.split("@");
 
-        return  aliasParts[0].split(":")[1];
+        return  aliasParts[0].split("\\+")[1];
     }
     public static String parseDirectedBys(String directedBy){
         directedBy = directedBy.replaceAll(">", "");
@@ -79,9 +78,9 @@ public class ParsingProgram {
         return  genreParts[genreParts.length-1];
     }
     public static String parseDescription(String description){
-        String[] descriptionParts = description.split("@");
+        String[] descriptionParts = description.split("@en");
 
-        return  descriptionParts[0].split(":")[1];
+        return  descriptionParts[0].split("\\+")[1];
     }
     public static String parseTvOrFilm(String tv_or_film){
         tv_or_film = tv_or_film.replaceAll(">", "");
@@ -93,7 +92,7 @@ public class ParsingProgram {
         String[] dateParts = release_date.split("\\^\\^");
         //String date = dateParts[0].split(":")[1];
 
-        return  dateParts[0].split(":")[1];
+        return  dateParts[0].split("\\+")[1];
     }
 
 
@@ -148,7 +147,7 @@ public class ParsingProgram {
             Matcher releaseDate_match = releaseDate_pat.matcher(s);
 
             if(id_match.matches()){
-                IDs.add(s);
+                IDs.add(parseIDs(s));
             }
             if(objectName_match.matches()){
                 objectNames.add(parseNames(s));
@@ -328,7 +327,7 @@ public class ParsingProgram {
                         Text id = new Text();
                         // mam problem ze zapisujem o jeden dopredu a stracam ten prvy , treba si zapametat
                         // predchadzajuci ...
-                        value.set(getAtributeFromLink(lineComponents[1]) + ":" + lineComponents[2]);
+                        value.set(getAtributeFromLink(lineComponents[1]) + "+" + lineComponents[2]);
                         id.set(lineID);
                         context.write(id, value);
                     }
@@ -340,7 +339,7 @@ public class ParsingProgram {
                     isMovie = containsID(lineID, fID);
                     if(isMovie){
                         Text id = new Text();
-                        value.set(getAtributeFromLink(lineComponents[1]) + ":" + lineComponents[2]);
+                        value.set(getAtributeFromLink(lineComponents[1]) + "+" + lineComponents[2]);
                         id.set(lineID);
                         context.write(id, value);
                     }
