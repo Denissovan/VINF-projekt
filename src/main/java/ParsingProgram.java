@@ -227,6 +227,25 @@ public class ParsingProgram {
         }
         return false;
     }
+    public static boolean containsGenre(String text){
+        String[] strs = text.split("\n");
+        List<String> list = new ArrayList<String>(Arrays.asList(strs));
+
+
+        //System.out.println("//////////////// Zacina volanie funkcie removeDuplicates //////////////");
+
+        Pattern p1 = Pattern.compile(".*common\\.notable_for\\.predicate\\+\"/tv/tv_program/genre\".*");
+
+
+        for (String s : list){
+            Matcher m1 = p1.matcher(s);
+            if(m1.matches()){
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public static class MovieIdMapper extends Mapper<Object , Text, Text, IntWritable> {
 
@@ -323,11 +342,11 @@ public class ParsingProgram {
                     baseID = lineID;
                     firstToSet = false;
                 }
-
+/*
                 if(lineID.contains("g.122r7f3r")){
                     System.out.println("Tu sa to zacina");
                 }
-
+*/
                 if(lineID.equals(baseID)){
                     if(isMovie) {
                         Text id = new Text();
@@ -388,7 +407,7 @@ public class ParsingProgram {
             */
             txt = removeDuplicates(txt);
 
-            txt = "=[" + txt + "]";
+            txt = "-||->[" + txt + "]";
 
             textValue.set(txt);
             context.write(key, textValue);
@@ -400,6 +419,7 @@ public class ParsingProgram {
 
 
         private final Text value = new Text();
+        private final Text Key = new Text();
         String line = null;
         String lineID = null;
         String movieID = null;
@@ -411,18 +431,19 @@ public class ParsingProgram {
 
             StringTokenizer documentLine = new StringTokenizer(Document.toString(), "\n", false);
 
-            Configuration conf = context.getConfiguration();
-            File fID = new File(conf.get("UnfilteredObjects"));
+            //Configuration conf = context.getConfiguration();
+            //File fID = new File(conf.get("UnfilteredObjects"));
 
 
             // read line by line
             if(documentLine.hasMoreTokens()){
                 line = documentLine.nextToken();
+                lineComponents = line.split("-\\|\\|->");
+                Key.set(lineComponents[0]);
+                value.set(lineComponents[1]);
 
-
-                System.out.println(line);
+                context.write(Key, value);
             }
-
 
         }
     }
@@ -439,13 +460,17 @@ public class ParsingProgram {
                 txt = txt + " " + val;
                 txt += "|";
             }
-            //manage duplicates
-            txt = removeDuplicates(txt);
+            if(containsName(txt)) {
 
-            txt = "\n[" + txt + "]\n";
+                //manage duplicates
+                txt = removeDuplicates(txt);
+                txt = getRelevantAtributes(txt);
 
-            textValue.set(txt);
-            context.write(key, textValue);
+                txt = "-||->[" + txt + "]\n";
+
+                textValue.set(txt);
+                context.write(key, textValue);
+            }
         }
     }
 
@@ -489,15 +514,15 @@ public class ParsingProgram {
         //System.exit(job2.waitForCompletion(true) ? 0 : 1);
         job2.waitForCompletion(true);
 
-        /*
+
         Configuration conf3 = new Configuration();
-        conf3.set("UnfilteredObjects", args[4]);
+        //conf3.set("UnfilteredObjects", args[4]);
 
         Job job3 = Job.getInstance(conf3, "object filter");
         job3.setJarByClass(ParsingProgram.class);
         job3.setMapperClass(MovieFilterMapper.class);
         //job.setCombinerClass(IntSumReducer.class);
-        //job3.setReducerClass(MovieFilterReducer.class);
+        job3.setReducerClass(MovieFilterReducer.class);
         job3.setMapOutputKeyClass(Text.class);
         job3.setMapOutputValueClass(Text.class);
         job3.setOutputKeyClass(Text.class);
@@ -505,7 +530,7 @@ public class ParsingProgram {
         FileInputFormat.addInputPath(job3, new Path(args[4]));
         FileOutputFormat.setOutputPath(job3, new Path(args[5]));
         System.exit(job3.waitForCompletion(true) ? 0 : 1);
-*/
+
     }
 
 }
