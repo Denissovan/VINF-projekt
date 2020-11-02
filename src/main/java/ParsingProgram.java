@@ -312,14 +312,20 @@ public class ParsingProgram {
                 lineComponents = line.split("\t");
                 lineID = getAtributeFromLink(lineComponents[0]);
 
+
+
+
+                if(!equals && !isMovie) {
+                    isMovie = containsID(lineID, fID); // if it contains true is asigned else false
+                }
+
                 if(firstToSet){
                     baseID = lineID;
                     firstToSet = false;
                 }
 
-                // pokusit sa este doimplementovat to badID
-                if(!equals && !isMovie) {
-                    isMovie = containsID(lineID, fID); // if it contains true is asigned else false
+                if(lineID.contains("g.122r7f3r")){
+                    System.out.println("Tu sa to zacina");
                 }
 
                 if(lineID.equals(baseID)){
@@ -334,9 +340,10 @@ public class ParsingProgram {
                     equals = true;
                 }
                 else {
-                    firstToSet = true;
+                    //firstToSet = true;
                     equals = false;
                     isMovie = containsID(lineID, fID);
+                    baseID = lineID;
                     if(isMovie){
                         Text id = new Text();
                         value.set(getAtributeFromLink(lineComponents[1]) + "+" + lineComponents[2]);
@@ -366,7 +373,7 @@ public class ParsingProgram {
                 txt += "|";
             }
 
-
+        /*
             if(containsName(txt)) {
 
                 //manage duplicates
@@ -378,6 +385,13 @@ public class ParsingProgram {
                 textValue.set(txt);
                 context.write(key, textValue);
             }
+            */
+            txt = removeDuplicates(txt);
+
+            txt = "=[" + txt + "]";
+
+            textValue.set(txt);
+            context.write(key, textValue);
         }
     }
 
