@@ -19,6 +19,9 @@ import java.util.regex.Pattern;
 public class ParsingProgram {
 
 
+    public static HashMap <String, String> entityLinksMap = new HashMap<>();
+
+
     public static String getAtributeFromLink(String link){
         if(link.matches("[<>].*[<>].*")) {
             String localLink = "";
@@ -63,9 +66,9 @@ public class ParsingProgram {
         return  nameParts[0].split("\\+")[1];
     }
     public static String parseAliases(String alias){
-        String[] aliasParts = alias.split("@");
+        String[] aliasParts = alias.split("\\+");
 
-        return  aliasParts[0].split("\\+")[1];
+        return  aliasParts[1];
     }
     public static String parseDirectedBys(String directedBy){
         directedBy = directedBy.replaceAll(">", "");
@@ -95,12 +98,19 @@ public class ParsingProgram {
         return  dateParts[0].split("\\+")[1];
     }
 
+    public static String parseNotableObj(String notableObj){
+        String[] notableParts = notableObj.split("\\+");
+        return getAtributeFromLink(notableParts[notableParts.length-1]);
+    }
+    public static String parseDisplayName(String displayName){
+        String[] displayNameParts = displayName.split("\\+");
+        return displayNameParts[displayNameParts.length-1];
+    }
 
 
     public static String getRelevantAtributes(String data){
         String[] strs = data.split("\\|");
         List<String> list = new ArrayList<String>(Arrays.asList(strs));
-        List<String> IDs = new ArrayList<>();
         List<String> objectNames = new ArrayList<>();
         List<String> aliases = new ArrayList<>();
         String tvOrFilm = "None";
@@ -109,18 +119,10 @@ public class ParsingProgram {
         String description = "None";
         List<String> genres = new ArrayList<>();
         String delim = ",";
-
-
         String returnStr;
 
-        //System.out.println("//////////////// Zacina volanie funkcie removeDuplicates //////////////");
 
-        Pattern id_pat = Pattern.compile(".*((authority\\.imdb\\.title)|(wikipedia\\.en_id)|" +
-                "(authority\\.tvrage\\.series_numeric)|(imdb\\.topic\\.title_id)|(tv\\.tv_program\\.tvrage_id)|" +
-                "(authority\\.netflix\\.movie)|(source\\.(allocine\\.fr\\.film)|(daum\\.movieid)|(movist\\.mid)" +
-                "(cineseoul\\.cinemaid)(kinopoisk\\.film))|(user\\.ovguide\\.tvdb_show_id)).*");
-
-        Pattern objectName_pat = Pattern.compile(".*(type\\.object\\.name).*@en");
+        Pattern objectName_pat = Pattern.compile(".*(type\\.object\\.name).*(@en).*");
 
         Pattern alias_pat = Pattern.compile(".*(common\\.topic\\.alias).*");
 
@@ -131,13 +133,12 @@ public class ParsingProgram {
 
         Pattern genre_pat = Pattern.compile(".*(((tv\\.tv_program)|( film\\.film))\\.genre).*");
 
-        Pattern description_pat = Pattern.compile(".*(common\\.topic\\.description).*");
+        Pattern description_pat = Pattern.compile(".*(common\\.topic\\.description).*(@en).*");
 
         Pattern releaseDate_pat = Pattern.compile(".*((film\\.film\\.initial_release_date)|(tv.tv_program.air_date_of_first_episode)).*");
 
 
         for (String s : list){
-            Matcher id_match = id_pat.matcher(s);
             Matcher objectName_match = objectName_pat.matcher(s);
             Matcher alias_match = alias_pat.matcher(s);
             Matcher tv_programOrFilm_match = tv_programOrFilm_pat.matcher(s);
@@ -146,9 +147,7 @@ public class ParsingProgram {
             Matcher description_match = description_pat.matcher(s);
             Matcher releaseDate_match = releaseDate_pat.matcher(s);
 
-            if(id_match.matches()){
-                IDs.add(parseIDs(s));
-            }
+
             if(objectName_match.matches()){
                 objectNames.add(parseNames(s));
             }
@@ -172,8 +171,7 @@ public class ParsingProgram {
             }
         }
 
-        String ids = "title_id{" + (IDs.isEmpty() ? "None" : String.join(delim, IDs)) + "}";
-        String ob_names = "names{" + (objectNames.isEmpty() ? "None" : String.join(delim, objectNames)) + "}";
+        String ob_names = "name{" + (objectNames.isEmpty() ? "None" : String.join(delim, objectNames)) + "}";
         String al = "aliases{" + (aliases.isEmpty() ?  "None" : String.join(delim, aliases)) + "}";
         String dir_by = "directed_by{" + (directedBy.isEmpty() ? "None" : String.join(delim, directedBy)) + "}";
         String gens = "genres{" + (genres.isEmpty() ? "None" : String.join(delim, genres)) + "}";
@@ -183,12 +181,38 @@ public class ParsingProgram {
         releaseDate = "release_date{" + releaseDate + "}";
 
 
-        returnStr = ids + "|\n" + ob_names + "|\n" + al + "|\n" + dir_by + "|\n" + gens +
-                "|\n" + description + "|\n"+
-                tvOrFilm + "|\n" + releaseDate;
+        returnStr = ob_names + "|" + al + "|" + dir_by + "|" + gens +
+                "|" + description + "|"+
+                tvOrFilm + "|" + releaseDate;
 
         //System.out.println("///////////////// Skoncilo volanie funkcie removeDuplicates ///////////////");
         return returnStr;
+    }
+
+    public static String getGeneralAtributes(String data){
+
+        String[] strs = data.split("\\|");
+        List<String> list = new ArrayList<String>(Arrays.asList(strs));
+        String objectLink = "";
+        String objectValue = "";
+
+        Pattern objLinkPat = Pattern.compile(".*(common\\.notable_for\\.notable_object).*");
+        Pattern objValuePat = Pattern.compile(".*(common\\.notable_for\\.display_name).*(@en).*");
+
+
+        for (String s : list){
+            Matcher objLink_match = objLinkPat.matcher(s);
+            Matcher objValue_match = objValuePat.matcher(s);
+
+            if (objLink_match.matches()){
+                objectLink = parseNotableObj(s);
+            }
+            if (objValue_match.matches()){
+                objectValue = parseDisplayName(s);
+            }
+        }
+
+        return objectLink + "|" + objectValue;
     }
 
     public static boolean containsID(String idToFind, File file) throws IOException {
@@ -209,24 +233,31 @@ public class ParsingProgram {
         }
         return false;
     }
-    public static  boolean containsName(String text){
+
+    public static  int containsEntity(String text){
         String[] strs = text.split("\n");
         List<String> list = new ArrayList<String>(Arrays.asList(strs));
 
 
         //System.out.println("//////////////// Zacina volanie funkcie removeDuplicates //////////////");
 
-        Pattern p1 = Pattern.compile(".*type\\.object\\.name.*");
+        Pattern namePat = Pattern.compile(".*(type\\.object\\.name).*(@en).*");
+        Pattern genrePat = Pattern.compile(".*((/tv/tv_program)|(/film/film)/genre).*");
 
 
-        for (String s : list){
-            Matcher m1 = p1.matcher(s);
-            if(m1.matches()){
-                return true;
+        for (String s : list) {
+            Matcher m1 = namePat.matcher(s);
+            Matcher m2 = genrePat.matcher(s);
+            if (m1.matches()) {
+                return 1;  // name matched
+            }
+            else if (m2.matches()){
+                return 2; // genre matched
             }
         }
-        return false;
+        return 0;
     }
+
     public static boolean containsGenre(String text){
         String[] strs = text.split("\n");
         List<String> list = new ArrayList<String>(Arrays.asList(strs));
@@ -246,6 +277,7 @@ public class ParsingProgram {
 
         return false;
     }
+
 
     public static class MovieIdMapper extends Mapper<Object , Text, Text, IntWritable> {
 
@@ -276,7 +308,7 @@ public class ParsingProgram {
                 Pattern p1 = Pattern.compile(".*((ns/film\\.film\\.)|(tv\\.tv_program\\.)).*");
                 Matcher m1 = p1.matcher(middlePart);
 
-                Pattern p2 = Pattern.compile(".*(/tv/tv_program/genre).*");
+                Pattern p2 = Pattern.compile(".*((/tv/tv_program)|(/film/film)/genre).*");
                 Matcher m2 = p2.matcher(lastPart);
 
                 if (m1.matches() || m2.matches()) {
@@ -381,10 +413,13 @@ public class ParsingProgram {
     public static class MovieFindReducer extends Reducer<Text,Text,Text,Text> {
 
         Text textValue = new Text();
+        Text keyValue = new Text();
+
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
             String  txt = "";
+
             //parse and create while tke groupKey matches the local key a.k.a lineID
             for(Text val : values){
 
@@ -392,25 +427,34 @@ public class ParsingProgram {
                 txt += "|";
             }
 
-        /*
-            if(containsName(txt)) {
+            int entity = containsEntity(txt);
 
-                //manage duplicates
-                txt = removeDuplicates(txt);
-                txt = getRelevantAtributes(txt);
+            switch (entity) {
+                case 1:   //film / tv_program
+                    txt = removeDuplicates(txt);
+                    txt = getRelevantAtributes(txt);
 
-                txt = "=[" + txt + "]\n";
+                    txt = "-||->[" + txt + "]";
 
-                textValue.set(txt);
-                context.write(key, textValue);
+                    textValue.set(txt);
+                    context.write(key, textValue);
+                    break;
+                case 2: // tv/fil genre
+                    txt = removeDuplicates(txt);
+                    txt = getGeneralAtributes(txt); // it can be used not only for genres ...
+
+                    String[] dataParts = txt.split("\\|");
+
+
+                    if (!entityLinksMap.containsKey(dataParts[0])){
+                        entityLinksMap.put(dataParts[0], dataParts[1]);
+                    }
+
+                    break;
             }
-            */
-            txt = removeDuplicates(txt);
 
-            txt = "-||->[" + txt + "]";
 
-            textValue.set(txt);
-            context.write(key, textValue);
+
         }
     }
 
@@ -450,6 +494,7 @@ public class ParsingProgram {
     public static class MovieFilterReducer extends Reducer<Text,Text,Text,Text> {
 
         Text textValue = new Text();
+        boolean dah = false;
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
@@ -460,17 +505,51 @@ public class ParsingProgram {
                 txt = txt + " " + val;
                 txt += "|";
             }
-            if(containsName(txt)) {
 
-                //manage duplicates
-                txt = removeDuplicates(txt);
-                txt = getRelevantAtributes(txt);
+            Pattern namePat = Pattern.compile(".*(name).*");
+            Matcher name_match = namePat.matcher(txt);
 
-                txt = "-||->[" + txt + "]\n";
 
-                textValue.set(txt);
+            if(name_match.matches()) {
+
+                String[] txtParts = txt.split("\\|");
+                String newText = "";
+                String toReplace = "";
+
+                String[] toReplaceParts;
+                String[] links;
+
+
+                for(String s : txtParts){
+                    if(s.matches(".*genres.*")){
+                        toReplace = s.replaceAll("[{}]", "|");
+                        toReplaceParts = toReplace.split("\\|");
+                        links = toReplaceParts[1].split(",");
+                        List<String> list = new ArrayList<String>();
+                        for(String l : links){
+                            list.add(entityLinksMap.get(l));
+                        }
+
+                        toReplaceParts[1] = String.join(",", list);
+
+                        s = toReplaceParts[0] + "{" + toReplaceParts[1] + "}";
+                    }
+                    newText = newText + " " + s;
+                    newText += "|";
+                }
+
+                textValue.set(newText);
                 context.write(key, textValue);
             }
+
+            if(!dah){
+                for(String s : entityLinksMap.keySet()){
+                    System.out.println(s + " " + entityLinksMap.get(s));
+                }
+                dah = true;
+            }
+
+
         }
     }
 
