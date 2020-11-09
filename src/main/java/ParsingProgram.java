@@ -9,6 +9,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -185,7 +186,7 @@ public class ParsingProgram {
                 "|" + description + "|"+
                 tvOrFilm + "|" + releaseDate;
 
-        //System.out.println("///////////////// Skoncilo volanie funkcie removeDuplicates ///////////////");
+
         return returnStr;
     }
 
@@ -193,8 +194,8 @@ public class ParsingProgram {
 
         String[] strs = data.split("\\|");
         List<String> list = new ArrayList<String>(Arrays.asList(strs));
-        String objectLink = "";
-        String objectValue = "";
+        String objectLink = "None";
+        String objectValue = "None";
 
         Pattern objLinkPat = Pattern.compile(".*(common\\.notable_for\\.notable_object).*");
         Pattern objValuePat = Pattern.compile(".*(common\\.notable_for\\.display_name).*(@en).*");
@@ -239,8 +240,6 @@ public class ParsingProgram {
         List<String> list = new ArrayList<String>(Arrays.asList(strs));
 
 
-        //System.out.println("//////////////// Zacina volanie funkcie removeDuplicates //////////////");
-
         Pattern namePat = Pattern.compile(".*(type\\.object\\.name).*(@en).*");
         Pattern genrePat = Pattern.compile(".*((/tv/tv_program)|(/film/film)/genre).*");
 
@@ -256,26 +255,6 @@ public class ParsingProgram {
             }
         }
         return 0;
-    }
-
-    public static boolean containsGenre(String text){
-        String[] strs = text.split("\n");
-        List<String> list = new ArrayList<String>(Arrays.asList(strs));
-
-
-        //System.out.println("//////////////// Zacina volanie funkcie removeDuplicates //////////////");
-
-        Pattern p1 = Pattern.compile(".*common\\.notable_for\\.predicate\\+\"/tv/tv_program/genre\".*");
-
-
-        for (String s : list){
-            Matcher m1 = p1.matcher(s);
-            if(m1.matches()){
-                return true;
-            }
-        }
-
-        return false;
     }
 
 
@@ -429,8 +408,11 @@ public class ParsingProgram {
 
             int entity = containsEntity(txt);
 
+
+
             switch (entity) {
                 case 1:   //film / tv_program
+
                     txt = removeDuplicates(txt);
                     txt = getRelevantAtributes(txt);
 
@@ -438,18 +420,30 @@ public class ParsingProgram {
 
                     textValue.set(txt);
                     context.write(key, textValue);
+
                     break;
                 case 2: // tv/fil genre
+                    System.out.println("Dostanem sa sem");
+
+                    // tu sa to niekde pokazi
+                    //System.out.println(key.toString() + "**->" + txt);
+                    //System.out.println(txt);
+
+                    //System.out.println(txt);
+
                     txt = removeDuplicates(txt);
                     txt = getGeneralAtributes(txt); // it can be used not only for genres ...
+
 
                     String[] dataParts = txt.split("\\|");
 
 
-                    if (!entityLinksMap.containsKey(dataParts[0])){
+                    //System.out.println(dataParts[0] + "-" + dataParts[1]);
+
+                    if ((!dataParts[0].equals("None") || !dataParts[1].equals("None")) && !entityLinksMap.containsKey(dataParts[0])){
                         entityLinksMap.put(dataParts[0], dataParts[1]);
                     }
-
+                    System.out.println("Dostanem sa aj tam");
                     break;
             }
 
@@ -525,7 +519,7 @@ public class ParsingProgram {
                         toReplace = s.replaceAll("[{}]", "|");
                         toReplaceParts = toReplace.split("\\|");
                         links = toReplaceParts[1].split(",");
-                        List<String> list = new ArrayList<String>();
+                        List<String> list = new ArrayList<>();
                         for(String l : links){
                             list.add(entityLinksMap.get(l));
                         }
@@ -561,6 +555,8 @@ public class ParsingProgram {
     public static void main(String[] args) throws Exception {
 
 
+        System.out.println("-----------Starting Job1 -----------");
+
         Configuration conf1 = new Configuration();
         Job job1 = Job.getInstance(conf1, "id parser");
         job1.setJarByClass(ParsingProgram.class);
@@ -576,8 +572,12 @@ public class ParsingProgram {
         //System.exit(job1.waitForCompletion(true) ? 0 : 1);
         job1.waitForCompletion(true);
 
+        System.out.println("-----------Job1 Completed-----------");
+
         Configuration conf2 = new Configuration();
         conf2.set("IDs", args[2]);
+
+        System.out.println("-----------Starting Job2 -----------");
 
         Job job2 = Job.getInstance(conf2, "movie/tv_program finder");
         job2.setJarByClass(ParsingProgram.class);
@@ -593,9 +593,12 @@ public class ParsingProgram {
         //System.exit(job2.waitForCompletion(true) ? 0 : 1);
         job2.waitForCompletion(true);
 
+        System.out.println("-----------Job2 Completed -----------");
 
         Configuration conf3 = new Configuration();
         //conf3.set("UnfilteredObjects", args[4]);
+
+        System.out.println("-----------Starting Job3 -----------");
 
         Job job3 = Job.getInstance(conf3, "object filter");
         job3.setJarByClass(ParsingProgram.class);
@@ -609,6 +612,8 @@ public class ParsingProgram {
         FileInputFormat.addInputPath(job3, new Path(args[4]));
         FileOutputFormat.setOutputPath(job3, new Path(args[5]));
         System.exit(job3.waitForCompletion(true) ? 0 : 1);
+
+        System.out.println("-----------Job3 Completed-----------");
 
     }
 
