@@ -49,18 +49,14 @@ public class ParsingProgram {
 
         String returnStr = "";
 
-        //System.out.println("//////////////// Zacina volanie funkcie removeDuplicates //////////////");
 
         for (String s : listSet){
             returnStr += s + "|";
         }
 
-        //System.out.println("///////////////// Skoncilo volanie funkcie removeDuplicates ///////////////");
         return returnStr;
     }
-    public static String parseIDs(String id){
-        return  id.replaceAll("\\+", ":");
-    }
+
     public static String parseNames(String name){
         String[] nameParts = name.split("@");
 
@@ -86,15 +82,14 @@ public class ParsingProgram {
 
         return  descriptionParts[0].split("\\+")[1];
     }
-    public static String parseTvOrFilm(String tv_or_film){
-        tv_or_film = tv_or_film.replaceAll(">", "");
-        String[] tv_filmParts = tv_or_film.split("/");
-        return  tv_filmParts[tv_filmParts.length-1];
+    public static String parseObjectType(String objectType){
+        objectType = objectType.replaceAll(">", "");
+        String[] obj_typeParts = objectType.split("/");
+        return  obj_typeParts[obj_typeParts.length-1];
     }
     public static String parseReleasDate(String release_date){
 
         String[] dateParts = release_date.split("\\^\\^");
-        //String date = dateParts[0].split(":")[1];
 
         return  dateParts[0].split("\\+")[1];
     }
@@ -104,6 +99,7 @@ public class ParsingProgram {
         return getAtributeFromLink(notableParts[notableParts.length-1]);
     }
     public static String parseDisplayName(String displayName){
+        displayName = displayName.replaceAll("@en","");
         String[] displayNameParts = displayName.split("\\+");
         return displayNameParts[displayNameParts.length-1];
     }
@@ -111,13 +107,13 @@ public class ParsingProgram {
 
     public static String getRelevantAtributes(String data){
         String[] strs = data.split("\\|");
-        List<String> list = new ArrayList<String>(Arrays.asList(strs));
+        List<String> list = new ArrayList<>(Arrays.asList(strs));
         List<String> objectNames = new ArrayList<>();
         List<String> aliases = new ArrayList<>();
-        String tvOrFilm = "None";
-        List<String> directedBy = new ArrayList<>();
+        List<String> objectType = new ArrayList<>();
+        //List<String> directedBy = new ArrayList<>();
         String releaseDate = "None";
-        String description = "None";
+        List<String> description = new ArrayList<>();
         List<String> genres = new ArrayList<>();
         String delim = ",";
         String returnStr;
@@ -127,23 +123,24 @@ public class ParsingProgram {
 
         Pattern alias_pat = Pattern.compile(".*(common\\.topic\\.alias).*");
 
-        Pattern tv_programOrFilm_pat = Pattern.compile(".*(type\\.object\\.type:<http://rdf\\.freebase\\.com/ns/" +
-                "(tv\\.tv_program>)|(film\\.film)).*");
+        Pattern objectType_pat = Pattern.compile(".*(type\\.object\\.type).*");
 
-        Pattern directedBy_pat = Pattern.compile(".*(film\\.film\\.directed_by).*");
+        Pattern base_pat = Pattern.compile(".*(ns/base\\.).*");
+
+        //Pattern directedBy_pat = Pattern.compile(".*(film\\.film\\.directed_by).*");
 
         Pattern genre_pat = Pattern.compile(".*(((tv\\.tv_program)|( film\\.film))\\.genre).*");
 
         Pattern description_pat = Pattern.compile(".*(common\\.topic\\.description).*(@en).*");
 
-        Pattern releaseDate_pat = Pattern.compile(".*((film\\.film\\.initial_release_date)|(tv.tv_program.air_date_of_first_episode)).*");
+        Pattern releaseDate_pat = Pattern.compile(".*((film\\.film\\.initial_release_date)|(tv\\.tv_program\\.air_date_of_first_episode)).*");
 
 
         for (String s : list){
             Matcher objectName_match = objectName_pat.matcher(s);
             Matcher alias_match = alias_pat.matcher(s);
-            Matcher tv_programOrFilm_match = tv_programOrFilm_pat.matcher(s);
-            Matcher directedBy_match = directedBy_pat.matcher(s);
+            Matcher objectType_match = objectType_pat.matcher(s);
+            Matcher base_match = base_pat.matcher(s);
             Matcher genre_match = genre_pat.matcher(s);
             Matcher description_match = description_pat.matcher(s);
             Matcher releaseDate_match = releaseDate_pat.matcher(s);
@@ -155,17 +152,17 @@ public class ParsingProgram {
             if(alias_match.matches()){
                 aliases.add(parseAliases(s));
             }
-            if(tv_programOrFilm_match.matches()){
-                tvOrFilm = parseTvOrFilm(s);
-            }
+            if(objectType_match.matches() && !base_match.matches()){
+                objectType.add(parseObjectType(s));
+            }/*
             if(directedBy_match.matches()){
                 directedBy.add(parseDirectedBys(s));
-            }
+            }*/
             if(genre_match.matches()){
                 genres.add(parseGenres(s));
             }
             if(description_match.matches()){
-                description = parseDescription(s);
+                 description.add(parseDescription(s));
             }
             if(releaseDate_match.matches()){
                 releaseDate = parseReleasDate(s);
@@ -174,17 +171,18 @@ public class ParsingProgram {
 
         String ob_names = "name{" + (objectNames.isEmpty() ? "None" : String.join(delim, objectNames)) + "}";
         String al = "aliases{" + (aliases.isEmpty() ?  "None" : String.join(delim, aliases)) + "}";
-        String dir_by = "directed_by{" + (directedBy.isEmpty() ? "None" : String.join(delim, directedBy)) + "}";
+        //String dir_by = "directed_by{" + (directedBy.isEmpty() ? "None" : String.join(delim, directedBy)) + "}";
         String gens = "genres{" + (genres.isEmpty() ? "None" : String.join(delim, genres)) + "}";
 
-        description = "description{" + description + "}";
-        tvOrFilm = "tv_or_film{" + tvOrFilm + "}";
+        String desc = "description{" + (description.isEmpty() ? "None" : String.join("||", description)) + "}";
+        //tvOrFilm = "tv_or_film{" + tvOrFilm + "}";
+        String obj_types = "type{" + (objectType.isEmpty() ? "None" : String.join(delim, objectType)) + "}";
         releaseDate = "release_date{" + releaseDate + "}";
 
 
-        returnStr = ob_names + "|" + al + "|" + dir_by + "|" + gens +
-                "|" + description + "|"+
-                tvOrFilm + "|" + releaseDate;
+        returnStr = ob_names + "|" + al + "|" + /*dir_by + "|" +*/ gens +
+                "|" + desc + "|"+
+                obj_types + "|" + releaseDate;
 
 
         return returnStr;
@@ -193,7 +191,7 @@ public class ParsingProgram {
     public static String getGeneralAtributes(String data){
 
         String[] strs = data.split("\\|");
-        List<String> list = new ArrayList<String>(Arrays.asList(strs));
+        List<String> list = new ArrayList<>(Arrays.asList(strs));
         String objectLink = "None";
         String objectValue = "None";
 
@@ -220,8 +218,8 @@ public class ParsingProgram {
 
         BufferedReader buff = new BufferedReader(new FileReader(file));
 
-        String fileLine = null;
-        String idInFile = null;
+        String fileLine;
+        String idInFile;
 
         while((fileLine = buff.readLine()) != null){
 
@@ -274,7 +272,6 @@ public class ParsingProgram {
             StringTokenizer documentLine = new StringTokenizer(Document.toString(), "\n", false);
 
 
-
             // read line by line
             if (documentLine.hasMoreTokens()) {
                 line = documentLine.nextToken();
@@ -317,7 +314,6 @@ public class ParsingProgram {
     public static class MovieFindMapper extends Mapper<Object , Text, Text, Text>{
 
 
-
         private final Text value = new Text();
         String line = null;
         String lineID = null;
@@ -343,8 +339,6 @@ public class ParsingProgram {
                 lineID = getAtributeFromLink(lineComponents[0]);
 
 
-
-
                 if(!equals && !isMovie) {
                     isMovie = containsID(lineID, fID); // if it contains true is asigned else false
                 }
@@ -353,16 +347,11 @@ public class ParsingProgram {
                     baseID = lineID;
                     firstToSet = false;
                 }
-/*
-                if(lineID.contains("g.122r7f3r")){
-                    System.out.println("Tu sa to zacina");
-                }
-*/
+
                 if(lineID.equals(baseID)){
                     if(isMovie) {
                         Text id = new Text();
-                        // mam problem ze zapisujem o jeden dopredu a stracam ten prvy , treba si zapametat
-                        // predchadzajuci ...
+
                         value.set(getAtributeFromLink(lineComponents[1]) + "+" + lineComponents[2]);
                         id.set(lineID);
                         context.write(id, value);
@@ -370,7 +359,7 @@ public class ParsingProgram {
                     equals = true;
                 }
                 else {
-                    //firstToSet = true;
+
                     equals = false;
                     isMovie = containsID(lineID, fID);
                     baseID = lineID;
@@ -380,7 +369,7 @@ public class ParsingProgram {
                         id.set(lineID);
                         context.write(id, value);
                     }
-                    //isMovie = false;
+
                 }
 
             }
@@ -392,7 +381,6 @@ public class ParsingProgram {
     public static class MovieFindReducer extends Reducer<Text,Text,Text,Text> {
 
         Text textValue = new Text();
-        Text keyValue = new Text();
 
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
@@ -408,8 +396,6 @@ public class ParsingProgram {
 
             int entity = containsEntity(txt);
 
-
-
             switch (entity) {
                 case 1:   //film / tv_program
 
@@ -423,13 +409,7 @@ public class ParsingProgram {
 
                     break;
                 case 2: // tv/fil genre
-                    System.out.println("Dostanem sa sem");
-
-                    // tu sa to niekde pokazi
-                    //System.out.println(key.toString() + "**->" + txt);
-                    //System.out.println(txt);
-
-                    //System.out.println(txt);
+                    //System.out.println("Dostanem sa sem");
 
                     txt = removeDuplicates(txt);
                     txt = getGeneralAtributes(txt); // it can be used not only for genres ...
@@ -438,16 +418,12 @@ public class ParsingProgram {
                     String[] dataParts = txt.split("\\|");
 
 
-                    //System.out.println(dataParts[0] + "-" + dataParts[1]);
-
                     if ((!dataParts[0].equals("None") || !dataParts[1].equals("None")) && !entityLinksMap.containsKey(dataParts[0])){
                         entityLinksMap.put(dataParts[0], dataParts[1]);
                     }
-                    System.out.println("Dostanem sa aj tam");
+                    //System.out.println("Dostanem sa aj tam");
                     break;
             }
-
-
 
         }
     }
@@ -459,18 +435,12 @@ public class ParsingProgram {
         private final Text value = new Text();
         private final Text Key = new Text();
         String line = null;
-        String lineID = null;
-        String movieID = null;
         String[] lineComponents;
-        boolean idInFile = false;
 
 
         public void map(Object key, Text Document, Context context) throws IOException, InterruptedException {
 
             StringTokenizer documentLine = new StringTokenizer(Document.toString(), "\n", false);
-
-            //Configuration conf = context.getConfiguration();
-            //File fID = new File(conf.get("UnfilteredObjects"));
 
 
             // read line by line
@@ -508,7 +478,7 @@ public class ParsingProgram {
 
                 String[] txtParts = txt.split("\\|");
                 String newText = "";
-                String toReplace = "";
+                String toReplace;
 
                 String[] toReplaceParts;
                 String[] links;
@@ -521,10 +491,14 @@ public class ParsingProgram {
                         links = toReplaceParts[1].split(",");
                         List<String> list = new ArrayList<>();
                         for(String l : links){
-                            list.add(entityLinksMap.get(l));
+                            String val = entityLinksMap.get(l);
+
+                            if(val!= null){
+                                list.add(val);
+                            }
                         }
 
-                        toReplaceParts[1] = String.join(",", list);
+                        toReplaceParts[1] = list.isEmpty() ? "None" : String.join(",", list);
 
                         s = toReplaceParts[0] + "{" + toReplaceParts[1] + "}";
                     }
