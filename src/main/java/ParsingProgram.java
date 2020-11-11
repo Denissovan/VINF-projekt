@@ -1,4 +1,5 @@
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import org.apache.hadoop.io.IntWritable;
@@ -67,11 +68,6 @@ public class ParsingProgram {
 
         return  aliasParts[1];
     }
-    public static String parseDirectedBys(String directedBy){
-        directedBy = directedBy.replaceAll(">", "");
-        String[] directedByParts = directedBy.split("/");
-        return  directedByParts[directedByParts.length-1];
-    }
     public static String parseGenres(String genre){
         genre = genre.replaceAll(">", "");
         String[] genreParts = genre.split("/");
@@ -111,7 +107,6 @@ public class ParsingProgram {
         List<String> objectNames = new ArrayList<>();
         List<String> aliases = new ArrayList<>();
         List<String> objectType = new ArrayList<>();
-        //List<String> directedBy = new ArrayList<>();
         String releaseDate = "None";
         List<String> description = new ArrayList<>();
         List<String> genres = new ArrayList<>();
@@ -126,8 +121,6 @@ public class ParsingProgram {
         Pattern objectType_pat = Pattern.compile(".*(type\\.object\\.type).*");
 
         Pattern base_pat = Pattern.compile(".*(ns/base\\.).*");
-
-        //Pattern directedBy_pat = Pattern.compile(".*(film\\.film\\.directed_by).*");
 
         Pattern genre_pat = Pattern.compile(".*(((tv\\.tv_program)|( film\\.film))\\.genre).*");
 
@@ -154,15 +147,12 @@ public class ParsingProgram {
             }
             if(objectType_match.matches() && !base_match.matches()){
                 objectType.add(parseObjectType(s));
-            }/*
-            if(directedBy_match.matches()){
-                directedBy.add(parseDirectedBys(s));
-            }*/
+            }
             if(genre_match.matches()){
                 genres.add(parseGenres(s));
             }
             if(description_match.matches()){
-                 description.add(parseDescription(s));
+                description.add(parseDescription(s));
             }
             if(releaseDate_match.matches()){
                 releaseDate = parseReleasDate(s);
@@ -171,16 +161,14 @@ public class ParsingProgram {
 
         String ob_names = "name{" + (objectNames.isEmpty() ? "None" : String.join(delim, objectNames)) + "}";
         String al = "aliases{" + (aliases.isEmpty() ?  "None" : String.join(delim, aliases)) + "}";
-        //String dir_by = "directed_by{" + (directedBy.isEmpty() ? "None" : String.join(delim, directedBy)) + "}";
         String gens = "genres{" + (genres.isEmpty() ? "None" : String.join(delim, genres)) + "}";
 
         String desc = "description{" + (description.isEmpty() ? "None" : String.join("||", description)) + "}";
-        //tvOrFilm = "tv_or_film{" + tvOrFilm + "}";
         String obj_types = "type{" + (objectType.isEmpty() ? "None" : String.join(delim, objectType)) + "}";
         releaseDate = "release_date{" + releaseDate + "}";
 
 
-        returnStr = ob_names + "|" + al + "|" + /*dir_by + "|" +*/ gens +
+        returnStr = ob_names + "|" + al + "|" +  gens +
                 "|" + desc + "|"+
                 obj_types + "|" + releaseDate;
 
@@ -214,14 +202,15 @@ public class ParsingProgram {
         return objectLink + "|" + objectValue;
     }
 
-    public static boolean containsID(String idToFind, File file) throws IOException {
+    public static boolean containsID(String idToFind, FileSystem fSystem, Path path) throws IOException {
 
-        BufferedReader buff = new BufferedReader(new FileReader(file));
+        BufferedReader buff = new BufferedReader(new InputStreamReader(fSystem.open(path)));
 
         String fileLine;
         String idInFile;
 
-        while((fileLine = buff.readLine()) != null){
+        while((fileLine = buff.readLine()) != null){ // tuto to skapina v hadoope
+
 
             idInFile = fileLine.split("\t")[0];
 
@@ -329,7 +318,8 @@ public class ParsingProgram {
             StringTokenizer documentLine = new StringTokenizer(Document.toString(), "\n", false);
 
             Configuration conf = context.getConfiguration();
-            File fID = new File(conf.get("IDs"));
+            FileSystem fSys = FileSystem.get(conf);
+            Path p = new Path(conf.get("IDs"));
 
 
             // read line by line
@@ -340,7 +330,7 @@ public class ParsingProgram {
 
 
                 if(!equals && !isMovie) {
-                    isMovie = containsID(lineID, fID); // if it contains true is asigned else false
+                    isMovie = containsID(lineID, fSys, p); // if it contains true is asigned else false
                 }
 
                 if(firstToSet){
@@ -361,7 +351,7 @@ public class ParsingProgram {
                 else {
 
                     equals = false;
-                    isMovie = containsID(lineID, fID);
+                    isMovie = containsID(lineID, fSys, p);
                     baseID = lineID;
                     if(isMovie){
                         Text id = new Text();
@@ -409,7 +399,6 @@ public class ParsingProgram {
 
                     break;
                 case 2: // tv/fil genre
-                    //System.out.println("Dostanem sa sem");
 
                     txt = removeDuplicates(txt);
                     txt = getGeneralAtributes(txt); // it can be used not only for genres ...
@@ -421,7 +410,7 @@ public class ParsingProgram {
                     if ((!dataParts[0].equals("None") || !dataParts[1].equals("None")) && !entityLinksMap.containsKey(dataParts[0])){
                         entityLinksMap.put(dataParts[0], dataParts[1]);
                     }
-                    //System.out.println("Dostanem sa aj tam");
+
                     break;
             }
 
@@ -509,14 +498,14 @@ public class ParsingProgram {
                 textValue.set(newText);
                 context.write(key, textValue);
             }
-
+            /*
             if(!dah){
                 for(String s : entityLinksMap.keySet()){
                     System.out.println(s + " " + entityLinksMap.get(s));
                 }
                 dah = true;
             }
-
+            */
 
         }
     }
