@@ -1,4 +1,5 @@
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
@@ -12,7 +13,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-
 
 import java.io.*;
 import java.util.*;
@@ -213,6 +213,24 @@ public class ParsingProgram {
         }
     }
 
+    public static void parseEntityLinkMap(FileSystem fSystem, Path path) throws IOException {
+
+        BufferedReader buff = new BufferedReader(new InputStreamReader(fSystem.open(path)));
+
+        String fileLine;
+        String[] KeyValuePair;
+
+        while((fileLine = buff.readLine()) != null){ // tuto to skapina v hadoope
+            KeyValuePair = fileLine.split("\\|");
+
+            if ((!KeyValuePair[0].equals("None") || !KeyValuePair[1].equals("None")) && !entityLinksMap.containsKey(KeyValuePair[0])){
+                entityLinksMap.put(KeyValuePair[0], KeyValuePair[1]);
+            }
+
+        }
+
+    }
+
     public static  int containsEntity(String text){
         String[] strs = text.split("\n");
         List<String> list = new ArrayList<>(Arrays.asList(strs));
@@ -303,7 +321,7 @@ public class ParsingProgram {
         boolean equals = false;
         boolean isMovie = false;
         boolean firstToSet = true;
-
+        boolean parsedHashset = false;
 
 
 
@@ -314,9 +332,15 @@ public class ParsingProgram {
             StringTokenizer documentLine = new StringTokenizer(Document.toString(), "\n", false);
 
 
-            Configuration conf = context.getConfiguration();
-            FileSystem fSys = FileSystem.get(conf);
-            Path p = new Path(conf.get("IDs"));
+            if(!parsedHashset){
+                Configuration conf = context.getConfiguration();
+                FileSystem fSys = FileSystem.get(conf);
+                Path p = new Path(conf.get("IDs"));
+
+                parseIDset(fSys, p);    // parsing ids from outputID to ID hashset
+                parsedHashset = true;
+            }
+
 
             // read line by line
             if(documentLine.hasMoreTokens()){
@@ -400,12 +424,36 @@ public class ParsingProgram {
                     txt = getGeneralAtributes(txt); // it can be used not only for genres ...
 
 
+                    //txt = "-||->[" + txt + "]";
+
+                    //textValue.set(txt);
+                    //context.write(key, textValue);
+
                     String[] dataParts = txt.split("\\|");
 
 
-                    if ((!dataParts[0].equals("None") || !dataParts[1].equals("None")) && !entityLinksMap.containsKey(dataParts[0])){
-                        entityLinksMap.put(dataParts[0], dataParts[1]);
+                    Configuration conf = context.getConfiguration();
+                    FileSystem fSys = FileSystem.get(conf);
+                    Path f = new Path(conf.get("HashMapLinks"));
+                    FSDataOutputStream fOutput;
+
+                    if (fSys.exists(f)){
+                        fOutput = fSys.append(f);
+                    }else{
+                        fOutput = fSys.create(f);
                     }
+                    fOutput.writeBytes(dataParts[0] + "|" + dataParts[1] + "\n");
+                    fOutput.close();
+
+
+                    /*Writer output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("outputHashMapLinks", true), "UTF-8"));
+                    output.write(dataParts[0] + "|" + dataParts[1] + "\n");
+                    output.close();
+                     */  // pre spustenie v intelij toto odkomentovat
+
+                    /*if ((!dataParts[0].equals("None") || !dataParts[1].equals("None")) && !entityLinksMap.containsKey(dataParts[0])){
+                        entityLinksMap.put(dataParts[0], dataParts[1]);
+                    }*/
 
                     break;
             }
@@ -444,11 +492,12 @@ public class ParsingProgram {
 
         Text textValue = new Text();
         boolean dah = false;
+        boolean createdLinksFile = false;
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
             String  txt = "";
-            //parse and create while tke groupKey matches the local key a.k.a lineID
+
             for(Text val : values){
 
                 txt = val.toString();
@@ -458,7 +507,18 @@ public class ParsingProgram {
             Matcher name_match = namePat.matcher(txt);
 
 
+            if(!createdLinksFile){
+                Configuration conf = context.getConfiguration();
+                FileSystem fSys = FileSystem.get(conf);
+                Path p = new Path(conf.get("HashMapLinks"));
+
+                parseEntityLinkMap(fSys, p);    // parsing values from outputHashMapLinks to ID hashset
+                createdLinksFile = true;
+            }
+
             if(name_match.matches()) {
+
+
 
                 String[] txtParts = txt.split("\\|");
                 String newText = "";
@@ -500,8 +560,6 @@ public class ParsingProgram {
                 Pattern arrayPat = Pattern.compile(".*(%%).*");
 
 
-                // treba este upravit aj to aby boli aj objekty, ktore by mali byt v poli ale je tam len jedna
-                //hodnota , aby boli vnimane ako pole
                 for (String j : jsonParts){
                         parts = j.split("\\{");
                         atribute = parts[0].replaceAll("\\[", "");
@@ -531,38 +589,10 @@ public class ParsingProgram {
                 }
 
 
-                textValue.set(movieObj.toString());
+                textValue.set(movieObj.toString()+",");
                 context.write(null, textValue);
             }
-            /*
-            if(!dah){
-                for(String s : entityLinksMap.keySet()){
-                    System.out.println(s + " " + entityLinksMap.get(s));
-                }
-                dah = true;
-            }
-            */
 
-        }
-    }
-
-    public static class MovieJsonReducer extends Reducer<Text,Text,Text,Text> {
-
-        Text textValue = new Text();
-
-
-        public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
-
-            String  txt = "";
-
-            //parse and create while tke groupKey matches the local key a.k.a lineID
-            for(Text val : values){
-
-                txt = txt + " " + val;
-                txt += "|";
-            }
-
-            //tuto dorobit este ten json
         }
     }
 
@@ -597,11 +627,7 @@ public class ParsingProgram {
 
         Configuration conf2 = new Configuration();
         conf2.set("IDs", args[2]);
-
-        FileSystem fSys = FileSystem.get(conf2);
-        Path p = new Path(conf2.get("IDs"));
-
-        parseIDset(fSys, p);   // parsing ids from outputID to ID hashset
+        conf2.set("HashMapLinks", args[6]);  // file to store the genres of movies
 
 
         System.out.println("-----------Starting Job2------------");
@@ -623,7 +649,7 @@ public class ParsingProgram {
         System.out.println("-----------Job2 Completed-----------");
 
         Configuration conf3 = new Configuration();
-        //conf3.set("UnfilteredObjects", args[4]);
+        conf3.set("HashMapLinks", args[6]);
 
         System.out.println("-----------Starting Job3------------");
 
