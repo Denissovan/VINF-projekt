@@ -25,15 +25,15 @@ public class ParsingProgram {
 
 
     public static HashMap <String, String> entityLinksMap = new HashMap<>();
+    public static HashSet <String> idSet = new HashSet<>();
 
 
     public static String getAtributeFromLink(String link){
         if(link.matches("[<>].*[<>].*")) {
-            String localLink = "";
+            String localLink = link;
             String[] localStrs;
-            localLink = link;
-            localLink = localLink.replace("<", "");
-            localLink = localLink.replace(">", "");
+            localLink = localLink.replaceAll("[<>]", "");
+            //localLink = localLink.replace(">", "");
             localStrs = localLink.split("/");
             return localStrs[localStrs.length - 1];
         }else {
@@ -46,8 +46,8 @@ public class ParsingProgram {
 
         String[] strs = data.split("\\|");
 
-        Set<String> set = new HashSet<String>(Arrays.asList(strs));
-        List<String> listSet = new ArrayList<String>(set);
+        Set<String> set = new HashSet<>(Arrays.asList(strs));
+        List<String> listSet = new ArrayList<>(set);
 
         Collections.sort(listSet);
 
@@ -107,14 +107,13 @@ public class ParsingProgram {
     public static String getRelevantAtributes(String data){
         String[] strs = data.split("\\|");
         List<String> list = new ArrayList<>(Arrays.asList(strs));
-        List<String> objectNames = new ArrayList<>();
+        String objectName = "None";
         List<String> aliases = new ArrayList<>();
         List<String> objectType = new ArrayList<>();
         String releaseDate = "None";
         List<String> description = new ArrayList<>();
         List<String> genres = new ArrayList<>();
-        String delim = ",";
-        String returnStr;
+        String delim = "%%";
 
 
         Pattern objectName_pat = Pattern.compile(".*(type\\.object\\.name).*(@en).*");
@@ -143,7 +142,8 @@ public class ParsingProgram {
 
 
             if(objectName_match.matches()){
-                objectNames.add(parseNames(s));
+                //objectNames.add(parseNames(s));
+                objectName = parseNames(s);
             }
             if(alias_match.matches()){
                 aliases.add(parseAliases(s));
@@ -162,21 +162,15 @@ public class ParsingProgram {
             }
         }
 
-        String ob_names = "name{" + (objectNames.isEmpty() ? "None" : String.join(delim, objectNames)) + "}";
-        String al = "aliases{" + (aliases.isEmpty() ?  "None" : String.join(delim, aliases)) + "}";
-        String gens = "genres{" + (genres.isEmpty() ? "None" : String.join(delim, genres)) + "}";
+        objectName = "name{" + objectName + "}";
+        String al = "aliases{" + (aliases.isEmpty() ?  "None" : String.join(delim, aliases)) + "%%}";
+        String gens = "genres{" + (genres.isEmpty() ? "None" : String.join(delim, genres)) + "%%}";
 
-        String desc = "description{" + (description.isEmpty() ? "None" : String.join("%%", description)) + "}";
-        String obj_types = "type{" + (objectType.isEmpty() ? "None" : String.join("%%", objectType)) + "}";
+        String desc = "description{" + (description.isEmpty() ? "None" : String.join(delim, description)) + "%%}";
+        String obj_types = "type{" + (objectType.isEmpty() ? "None" : String.join(delim, objectType)) + "%%}";
         releaseDate = "release_date{" + releaseDate + "}";
 
-
-        returnStr = ob_names + "|" + al + "|" +  gens +
-                "|" + desc + "|"+
-                obj_types + "|" + releaseDate;
-
-
-        return returnStr;
+        return objectName + "|" + al + "|" +  gens + "|" + desc + "|"+ obj_types + "|" + releaseDate;
     }
 
     public static String getGeneralAtributes(String data){
@@ -205,7 +199,7 @@ public class ParsingProgram {
         return objectLink + "|" + objectValue;
     }
 
-    public static boolean containsID(String idToFind, FileSystem fSystem, Path path) throws IOException {
+    public static void parseIDset(FileSystem fSystem, Path path) throws IOException {
 
         BufferedReader buff = new BufferedReader(new InputStreamReader(fSystem.open(path)));
 
@@ -214,20 +208,14 @@ public class ParsingProgram {
 
         while((fileLine = buff.readLine()) != null){ // tuto to skapina v hadoope
 
-
             idInFile = fileLine.split("\t")[0];
-
-            if(idToFind.equals(idInFile)){
-                return true;
-
-            }
+            idSet.add(idInFile);
         }
-        return false;
     }
 
     public static  int containsEntity(String text){
         String[] strs = text.split("\n");
-        List<String> list = new ArrayList<String>(Arrays.asList(strs));
+        List<String> list = new ArrayList<>(Arrays.asList(strs));
 
 
         Pattern namePat = Pattern.compile(".*(type\\.object\\.name).*(@en).*");
@@ -307,6 +295,7 @@ public class ParsingProgram {
 
 
         private final Text value = new Text();
+        private final Text id = new Text();
         String line = null;
         String lineID = null;
         String baseID = null;
@@ -316,14 +305,18 @@ public class ParsingProgram {
         boolean firstToSet = true;
 
 
+
+
         public void map(Object key, Text Document, Context context) throws IOException, InterruptedException {
 
+
+
             StringTokenizer documentLine = new StringTokenizer(Document.toString(), "\n", false);
+
 
             Configuration conf = context.getConfiguration();
             FileSystem fSys = FileSystem.get(conf);
             Path p = new Path(conf.get("IDs"));
-
 
             // read line by line
             if(documentLine.hasMoreTokens()){
@@ -333,7 +326,7 @@ public class ParsingProgram {
 
 
                 if(!equals && !isMovie) {
-                    isMovie = containsID(lineID, fSys, p); // if it contains true is asigned else false
+                    isMovie = idSet.contains(lineID); // if it contains true is asigned else false
                 }
 
                 if(firstToSet){
@@ -343,7 +336,7 @@ public class ParsingProgram {
 
                 if(lineID.equals(baseID)){
                     if(isMovie) {
-                        Text id = new Text();
+
 
                         value.set(getAtributeFromLink(lineComponents[1]) + "+" + lineComponents[2]);
                         id.set(lineID);
@@ -354,10 +347,10 @@ public class ParsingProgram {
                 else {
 
                     equals = false;
-                    isMovie = containsID(lineID, fSys, p);
+                    isMovie = idSet.contains(lineID);
                     baseID = lineID;
                     if(isMovie){
-                        Text id = new Text();
+                        //Text id = new Text();
                         value.set(getAtributeFromLink(lineComponents[1]) + "+" + lineComponents[2]);
                         id.set(lineID);
                         context.write(id, value);
@@ -401,7 +394,7 @@ public class ParsingProgram {
                     context.write(key, textValue);
 
                     break;
-                case 2: // tv/fil genre
+                case 2: // tv/film genre
 
                     txt = removeDuplicates(txt);
                     txt = getGeneralAtributes(txt); // it can be used not only for genres ...
@@ -479,7 +472,7 @@ public class ParsingProgram {
                     if(s.matches(".*genres.*")){
                         toReplace = s.replaceAll("[{}]", "|");
                         toReplaceParts = toReplace.split("\\|");
-                        links = toReplaceParts[1].split(",");
+                        links = toReplaceParts[1].split("%%");
                         List<String> list = new ArrayList<>();
                         for(String l : links){
                             String val = entityLinksMap.get(l);
@@ -491,7 +484,7 @@ public class ParsingProgram {
 
                         toReplaceParts[1] = list.isEmpty() ? "None" : String.join("%%", list);
 
-                        s = toReplaceParts[0] + "{" + toReplaceParts[1] + "}";
+                        s = toReplaceParts[0] + "{" + toReplaceParts[1] + "%%}";
                     }
                     newText = newText + "|" + s;
                 }
@@ -506,6 +499,9 @@ public class ParsingProgram {
 
                 Pattern arrayPat = Pattern.compile(".*(%%).*");
 
+
+                // treba este upravit aj to aby boli aj objekty, ktore by mali byt v poli ale je tam len jedna
+                //hodnota , aby boli vnimane ako pole
                 for (String j : jsonParts){
                         parts = j.split("\\{");
                         atribute = parts[0].replaceAll("\\[", "");
@@ -598,8 +594,15 @@ public class ParsingProgram {
 
         System.out.println("-----------Job1 Completed-----------");
 
+
         Configuration conf2 = new Configuration();
         conf2.set("IDs", args[2]);
+
+        FileSystem fSys = FileSystem.get(conf2);
+        Path p = new Path(conf2.get("IDs"));
+
+        parseIDset(fSys, p);   // parsing ids from outputID to ID hashset
+
 
         System.out.println("-----------Starting Job2------------");
 
@@ -617,7 +620,7 @@ public class ParsingProgram {
         //System.exit(job2.waitForCompletion(true) ? 0 : 1);
         job2.waitForCompletion(true);
 
-        System.out.println("-----------Job2 Completed------------");
+        System.out.println("-----------Job2 Completed-----------");
 
         Configuration conf3 = new Configuration();
         //conf3.set("UnfilteredObjects", args[4]);
@@ -639,7 +642,6 @@ public class ParsingProgram {
 
         System.out.println("-----------Job3 Completed-----------");
 
-        System.out.println("-----------Starting Job4---------------");
 
 
 
