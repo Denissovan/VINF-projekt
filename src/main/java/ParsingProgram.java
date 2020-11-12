@@ -9,6 +9,9 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 
 
 import java.io.*;
@@ -163,8 +166,8 @@ public class ParsingProgram {
         String al = "aliases{" + (aliases.isEmpty() ?  "None" : String.join(delim, aliases)) + "}";
         String gens = "genres{" + (genres.isEmpty() ? "None" : String.join(delim, genres)) + "}";
 
-        String desc = "description{" + (description.isEmpty() ? "None" : String.join("||", description)) + "}";
-        String obj_types = "type{" + (objectType.isEmpty() ? "None" : String.join(delim, objectType)) + "}";
+        String desc = "description{" + (description.isEmpty() ? "None" : String.join("%%", description)) + "}";
+        String obj_types = "type{" + (objectType.isEmpty() ? "None" : String.join("%%", objectType)) + "}";
         releaseDate = "release_date{" + releaseDate + "}";
 
 
@@ -455,8 +458,7 @@ public class ParsingProgram {
             //parse and create while tke groupKey matches the local key a.k.a lineID
             for(Text val : values){
 
-                txt = txt + " " + val;
-                txt += "|";
+                txt = val.toString();
             }
 
             Pattern namePat = Pattern.compile(".*(name).*");
@@ -487,16 +489,54 @@ public class ParsingProgram {
                             }
                         }
 
-                        toReplaceParts[1] = list.isEmpty() ? "None" : String.join(",", list);
+                        toReplaceParts[1] = list.isEmpty() ? "None" : String.join("%%", list);
 
                         s = toReplaceParts[0] + "{" + toReplaceParts[1] + "}";
                     }
-                    newText = newText + " " + s;
-                    newText += "|";
+                    newText = newText + "|" + s;
+                }
+                newText = newText.replaceAll("^\\|", "");
+
+                String[] jsonParts = newText.split("\\|");
+
+                JSONObject movieObj = new JSONObject();
+
+                String[] parts;
+                String atribute, value;
+
+                Pattern arrayPat = Pattern.compile(".*(%%).*");
+
+                for (String j : jsonParts){
+                        parts = j.split("\\{");
+                        atribute = parts[0].replaceAll("\\[", "");
+                        value = parts[1].replaceAll("[}\\]\"]", "");
+
+                        Matcher array_match = arrayPat.matcher(value);
+
+                        if(array_match.matches()){
+                            JSONArray jsonArr = new JSONArray();
+                            String[] valueArr = value.split("%%");
+                            for (String v : valueArr){
+                                jsonArr.put(v);
+                            }
+                            try {
+                                movieObj.put(atribute, jsonArr);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        else{
+                            try {
+                                movieObj.put(atribute, value);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
                 }
 
-                textValue.set(newText);
-                context.write(key, textValue);
+
+                textValue.set(movieObj.toString());
+                context.write(null, textValue);
             }
             /*
             if(!dah){
@@ -510,6 +550,27 @@ public class ParsingProgram {
         }
     }
 
+    public static class MovieJsonReducer extends Reducer<Text,Text,Text,Text> {
+
+        Text textValue = new Text();
+
+
+        public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+
+            String  txt = "";
+
+            //parse and create while tke groupKey matches the local key a.k.a lineID
+            for(Text val : values){
+
+                txt = txt + " " + val;
+                txt += "|";
+            }
+
+            //tuto dorobit este ten json
+        }
+    }
+
+
     /* first argument args[0] is the file path of the input data
        second argument args[1] is the file path of the Movie id output data
        third argument args[2] is the file path of the unfiltered Movie objects
@@ -518,7 +579,7 @@ public class ParsingProgram {
     public static void main(String[] args) throws Exception {
 
 
-        System.out.println("-----------Starting Job1 -----------");
+        System.out.println("-----------Starting Job1------------");
 
         Configuration conf1 = new Configuration();
         Job job1 = Job.getInstance(conf1, "id parser");
@@ -540,7 +601,7 @@ public class ParsingProgram {
         Configuration conf2 = new Configuration();
         conf2.set("IDs", args[2]);
 
-        System.out.println("-----------Starting Job2 -----------");
+        System.out.println("-----------Starting Job2------------");
 
         Job job2 = Job.getInstance(conf2, "movie/tv_program finder");
         job2.setJarByClass(ParsingProgram.class);
@@ -556,12 +617,12 @@ public class ParsingProgram {
         //System.exit(job2.waitForCompletion(true) ? 0 : 1);
         job2.waitForCompletion(true);
 
-        System.out.println("-----------Job2 Completed -----------");
+        System.out.println("-----------Job2 Completed------------");
 
         Configuration conf3 = new Configuration();
         //conf3.set("UnfilteredObjects", args[4]);
 
-        System.out.println("-----------Starting Job3 -----------");
+        System.out.println("-----------Starting Job3------------");
 
         Job job3 = Job.getInstance(conf3, "object filter");
         job3.setJarByClass(ParsingProgram.class);
@@ -577,6 +638,11 @@ public class ParsingProgram {
         System.exit(job3.waitForCompletion(true) ? 0 : 1);
 
         System.out.println("-----------Job3 Completed-----------");
+
+        System.out.println("-----------Starting Job4---------------");
+
+
+
 
     }
 
