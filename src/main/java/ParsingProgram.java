@@ -33,7 +33,6 @@ public class ParsingProgram {
             String localLink = link;
             String[] localStrs;
             localLink = localLink.replaceAll("[<>]", "");
-            //localLink = localLink.replace(">", "");
             localStrs = localLink.split("/");
             return localStrs[localStrs.length - 1];
         }else {
@@ -142,7 +141,6 @@ public class ParsingProgram {
 
 
             if(objectName_match.matches()){
-                //objectNames.add(parseNames(s));
                 objectName = parseNames(s);
             }
             if(alias_match.matches()){
@@ -206,7 +204,7 @@ public class ParsingProgram {
         String fileLine;
         String idInFile;
 
-        while((fileLine = buff.readLine()) != null){ // tuto to skapina v hadoope
+        while((fileLine = buff.readLine()) != null){
 
             idInFile = fileLine.split("\t")[0];
             idSet.add(idInFile);
@@ -220,7 +218,7 @@ public class ParsingProgram {
         String fileLine;
         String[] KeyValuePair;
 
-        while((fileLine = buff.readLine()) != null){ // tuto to skapina v hadoope
+        while((fileLine = buff.readLine()) != null){
             KeyValuePair = fileLine.split("\\|");
 
             if ((!KeyValuePair[0].equals("None") || !KeyValuePair[1].equals("None")) && !entityLinksMap.containsKey(KeyValuePair[0])){
@@ -374,7 +372,7 @@ public class ParsingProgram {
                     isMovie = idSet.contains(lineID);
                     baseID = lineID;
                     if(isMovie){
-                        //Text id = new Text();
+
                         value.set(getAtributeFromLink(lineComponents[1]) + "+" + lineComponents[2]);
                         id.set(lineID);
                         context.write(id, value);
@@ -423,15 +421,9 @@ public class ParsingProgram {
                     txt = removeDuplicates(txt);
                     txt = getGeneralAtributes(txt); // it can be used not only for genres ...
 
-
-                    //txt = "-||->[" + txt + "]";
-
-                    //textValue.set(txt);
-                    //context.write(key, textValue);
-
                     String[] dataParts = txt.split("\\|");
 
-
+                    
                     Configuration conf = context.getConfiguration();
                     FileSystem fSys = FileSystem.get(conf);
                     Path f = new Path(conf.get("HashMapLinks"));
@@ -448,12 +440,8 @@ public class ParsingProgram {
 
                     /*Writer output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("outputHashMapLinks", true), "UTF-8"));
                     output.write(dataParts[0] + "|" + dataParts[1] + "\n");
-                    output.close();
-                     */  // pre spustenie v intelij toto odkomentovat
+                    output.close();*/ // pre spustenie v intelij toto odkomentovat
 
-                    /*if ((!dataParts[0].equals("None") || !dataParts[1].equals("None")) && !entityLinksMap.containsKey(dataParts[0])){
-                        entityLinksMap.put(dataParts[0], dataParts[1]);
-                    }*/
 
                     break;
             }
@@ -491,7 +479,6 @@ public class ParsingProgram {
     public static class MovieFilterReducer extends Reducer<Text,Text,Text,Text> {
 
         Text textValue = new Text();
-        boolean dah = false;
         boolean createdLinksFile = false;
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
