@@ -217,7 +217,9 @@ public class ParsingProgram {
         String[] KeyValuePair;
 
         while((fileLine = buff.readLine()) != null){
-            KeyValuePair = fileLine.split("\\|");
+            KeyValuePair = fileLine.split("\\+");
+
+            KeyValuePair[0] = KeyValuePair[0].replaceAll("\t", "");
 
             if ((!KeyValuePair[0].equals("None") || !KeyValuePair[1].equals("None")) && !entityLinksMap.containsKey(KeyValuePair[0])){
                 entityLinksMap.put(KeyValuePair[0], KeyValuePair[1]);
@@ -519,7 +521,7 @@ public class ParsingProgram {
 
             //parse and create while tke groupKey matches the local key a.k.a lineID
             for(Text val : values){
-                txt += " " + val;
+                txt += "" + val;
                 txt += "|";
             }
             txt = removeDuplicates(txt);
@@ -528,7 +530,7 @@ public class ParsingProgram {
             txt = txt.replaceAll("\\|$", "");
 
             keyVal.set(key);
-            genreVal.set(txt);
+            genreVal.set("+" + txt);
 
             context.write(keyVal, genreVal);
 
@@ -545,7 +547,7 @@ public class ParsingProgram {
         private final Text Key = new Text();
         String line = null;
         String[] lineComponents;
-
+        Pattern p = Pattern.compile(".*]G.*");
 
         public void map(Object key, Text Document, Context context) throws IOException, InterruptedException {
 
@@ -556,10 +558,15 @@ public class ParsingProgram {
             if(documentLine.hasMoreTokens()){
                 line = documentLine.nextToken();
                 lineComponents = line.split("-\\|\\|->");
-                Key.set(lineComponents[0]);
-                value.set(lineComponents[1]);
+                Matcher m = p.matcher(lineComponents[1]);
 
-                context.write(Key, value);
+                if(!m.matches()){
+                    Key.set(lineComponents[0]);
+                    value.set(lineComponents[1]);
+
+                    context.write(Key, value);
+                }
+
             }
 
         }
@@ -569,7 +576,8 @@ public class ParsingProgram {
         Text textValue = new Text();
         boolean createdLinksFile = false;
         Pattern namePat = Pattern.compile(".*(name).*");
-
+        Pattern typePat = Pattern.compile(".*(type).*");
+        Pattern arrayPat = Pattern.compile(".*(%%).*");
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
@@ -581,6 +589,8 @@ public class ParsingProgram {
             }
 
             Matcher name_match = namePat.matcher(txt);
+
+
 
 
             if(!createdLinksFile){
@@ -603,8 +613,15 @@ public class ParsingProgram {
                 String[] toReplaceParts;
                 String[] links;
 
+                boolean isFilm = false;
+
+                if(txt.matches(".*(film\\.film).*")){
+                    isFilm = true;
+                }
+
 
                 for(String s : txtParts){
+
                     if(s.matches(".*genres.*")){
                         toReplace = s.replaceAll("[{}]", "|");
                         toReplaceParts = toReplace.split("\\|");
@@ -614,7 +631,22 @@ public class ParsingProgram {
                             String val = entityLinksMap.get(l);
 
                             if(val!= null){
-                                list.add(val);
+
+                                String[] valParts = val.split("\\|");
+
+                                if(valParts.length == 1){
+                                    list.add(val);
+                                }else {
+                                    for (String v : valParts){
+                                        if (v.matches(".*(Film|film).*") && isFilm){
+                                            list.add(v);
+                                        }
+                                        if(v.matches(".*(TV|tv).*") && !isFilm){
+                                            list.add(v);
+                                        }
+                                    }
+                                }
+
                             }
                         }
 
@@ -633,7 +665,7 @@ public class ParsingProgram {
                 String[] parts;
                 String atribute, value;
 
-                Pattern arrayPat = Pattern.compile(".*(%%).*");
+
 
 
                 for (String j : jsonParts){
@@ -740,15 +772,18 @@ public class ParsingProgram {
         job3.setOutputValueClass(Text.class);
         FileInputFormat.addInputPath(job3, new Path(args[4]));
         FileOutputFormat.setOutputPath(job3, new Path(args[6]));
-        System.exit(job3.waitForCompletion(true) ? 0 : 1);
-
+        //System.exit(job3.waitForCompletion(true) ? 0 : 1);
+        job3.waitForCompletion(true);
         System.out.println("-----------Job3 Completed-----------");
 
 
-        /*
+
         System.out.println("-----------Starting Job4------------");
 
-        Job job4 = Job.getInstance(conf3, "object filter");
+        Configuration conf4 = new Configuration();
+        conf4.set("HashMapLinks", args[7]);
+
+        Job job4 = Job.getInstance(conf4, "object filter");
         job4.setJarByClass(ParsingProgram.class);
         job4.setMapperClass(MovieFilterMapper.class);
         //job.setCombinerClass(IntSumReducer.class);
@@ -762,7 +797,7 @@ public class ParsingProgram {
         System.exit(job4.waitForCompletion(true) ? 0 : 1);
 
         System.out.println("-----------Job4 Completed-----------");
-        */
+
     }
 
 }
