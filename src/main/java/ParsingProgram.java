@@ -50,14 +50,12 @@ public class ParsingProgram {
 
         Collections.sort(listSet);
 
-        String returnStr = "";
-
-
+        /*
         for (String s : listSet){
             returnStr += s + "|";
         }
-
-        return returnStr;
+*/
+        return String.join("|", listSet);
     }
 
     public static String parseNames(String name){
@@ -230,14 +228,23 @@ public class ParsingProgram {
     }
 
     public static  int containsEntity(String text){
-        String[] strs = text.split("\n");
-        List<String> list = new ArrayList<>(Arrays.asList(strs));
+        //String[] strs = text.split("\\|");
+        //List<String> list = new ArrayList<>(Arrays.asList(strs));
 
 
-        Pattern namePat = Pattern.compile(".*(type\\.object\\.name).*(@en).*");
+        Pattern namePat = Pattern.compile(".*(type\\.object\\.name)\\+\"([^\"]+)\"(@en).*");
         Pattern genrePat = Pattern.compile(".*((/tv/tv_program)|(/film/film)/genre).*");
 
+        Matcher m1 = namePat.matcher(text);
+        Matcher m2 = genrePat.matcher(text);
 
+        if (m1.matches()) {
+            return 1;  // name matched
+        }
+        else if (m2.matches()){
+            return 2; // genre matched
+        }
+        /*
         for (String s : list) {
             Matcher m1 = namePat.matcher(s);
             Matcher m2 = genrePat.matcher(s);
@@ -247,7 +254,7 @@ public class ParsingProgram {
             else if (m2.matches()){
                 return 2; // genre matched
             }
-        }
+        }*/
         return 0;
     }
 
@@ -262,6 +269,9 @@ public class ParsingProgram {
         String[] lineParts;
         String middlePart = null;
         String lastPart = null;
+        Pattern p1 = Pattern.compile(".*((ns/film\\.film\\.)|(tv\\.tv_program\\.)).*");
+        Pattern p2 = Pattern.compile(".*((/tv/tv_program)|(/film/film)/genre).*");
+
 
         public void map(Object key, Text Document, Context context) throws IOException, InterruptedException {
 
@@ -277,10 +287,10 @@ public class ParsingProgram {
                 middlePart = lineParts[1];
                 lastPart = lineParts[2];
 
-                Pattern p1 = Pattern.compile(".*((ns/film\\.film\\.)|(tv\\.tv_program\\.)).*");
+
                 Matcher m1 = p1.matcher(middlePart);
 
-                Pattern p2 = Pattern.compile(".*((/tv/tv_program)|(/film/film)/genre).*");
+
                 Matcher m2 = p2.matcher(lastPart);
 
                 if (m1.matches() || m2.matches()) {
@@ -402,6 +412,11 @@ public class ParsingProgram {
                 txt += "|";
             }
 
+
+            if(key.toString().equals("m.011nmw7l")){
+                System.out.println("Daco !");
+            }
+
             int entity = containsEntity(txt);
 
             switch (entity) {
@@ -423,7 +438,12 @@ public class ParsingProgram {
 
                     String[] dataParts = txt.split("\\|");
 
-                    
+                    txt = "-||->[" + dataParts[0] + "|" + dataParts[1] + "]G";
+
+                    textValue.set(txt);
+                    context.write(key, textValue);
+
+                    /*
                     Configuration conf = context.getConfiguration();
                     FileSystem fSys = FileSystem.get(conf);
                     Path f = new Path(conf.get("HashMapLinks"));
@@ -436,7 +456,7 @@ public class ParsingProgram {
                     }
                     fOutput.writeBytes(dataParts[0] + "|" + dataParts[1] + "\n");
                     fOutput.close();
-
+                    */
 
                     /*Writer output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("outputHashMapLinks", true), "UTF-8"));
                     output.write(dataParts[0] + "|" + dataParts[1] + "\n");
@@ -448,6 +468,74 @@ public class ParsingProgram {
 
         }
     }
+    public static class GenreFilterMapper extends Mapper<Object, Text, Text, Text>{
+
+        private final Text value = new Text();
+        private final Text Key = new Text();
+        String line = null;
+        String[] lineComponents;
+        Pattern p = Pattern.compile(".*]G.*");
+
+        public void map(Object key, Text Document, Context context) throws IOException, InterruptedException {
+
+            StringTokenizer documentLine = new StringTokenizer(Document.toString(), "\n", false);
+
+
+
+
+            // read line by line
+            if(documentLine.hasMoreTokens()){
+                line = documentLine.nextToken();
+                lineComponents = line.split("-\\|\\|->");
+
+                Matcher m = p.matcher(lineComponents[1]);
+
+                if (m.matches()){
+
+                    lineComponents[1] = lineComponents[1].replaceAll("]G", "]");
+                    lineComponents[1] = lineComponents[1].replaceAll("[\\[\\]]", "");
+
+                    String[] genreComponents = lineComponents[1].split("\\|");
+
+                    Key.set(genreComponents[0]);
+                    value.set(genreComponents[1]);
+
+                    context.write(Key, value);
+                }
+
+            }
+
+        }
+
+    }
+    public static class GenreFilterReducer extends Reducer<Text,Text,Text,Text>{
+
+        Text keyVal = new Text();
+        Text genreVal = new Text();
+
+        public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+
+            String  txt = "";
+
+            //parse and create while tke groupKey matches the local key a.k.a lineID
+            for(Text val : values){
+                txt += " " + val;
+                txt += "|";
+            }
+            txt = removeDuplicates(txt);
+            //String[] dataParts = txt.split("\\|");
+
+            txt = txt.replaceAll("\\|$", "");
+
+            keyVal.set(key);
+            genreVal.set(txt);
+
+            context.write(keyVal, genreVal);
+
+        }
+
+    }
+
 
     public static class MovieFilterMapper extends Mapper<Object , Text, Text, Text>{
 
@@ -480,6 +568,8 @@ public class ParsingProgram {
 
         Text textValue = new Text();
         boolean createdLinksFile = false;
+        Pattern namePat = Pattern.compile(".*(name).*");
+
 
         public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
@@ -490,7 +580,6 @@ public class ParsingProgram {
                 txt = val.toString();
             }
 
-            Pattern namePat = Pattern.compile(".*(name).*");
             Matcher name_match = namePat.matcher(txt);
 
 
@@ -614,7 +703,7 @@ public class ParsingProgram {
 
         Configuration conf2 = new Configuration();
         conf2.set("IDs", args[2]);
-        conf2.set("HashMapLinks", args[6]);  // file to store the genres of movies
+        //conf2.set("HashMapLinks", args[6]);  // file to store the genres of movies
 
 
         System.out.println("-----------Starting Job2------------");
@@ -636,29 +725,44 @@ public class ParsingProgram {
         System.out.println("-----------Job2 Completed-----------");
 
         Configuration conf3 = new Configuration();
-        conf3.set("HashMapLinks", args[6]);
+        //conf3.set("HashMapLinks", args[6]);
 
         System.out.println("-----------Starting Job3------------");
 
-        Job job3 = Job.getInstance(conf3, "object filter");
+        Job job3 = Job.getInstance(conf3, "hashMapLinks filter");
         job3.setJarByClass(ParsingProgram.class);
-        job3.setMapperClass(MovieFilterMapper.class);
+        job3.setMapperClass(GenreFilterMapper.class);
         //job.setCombinerClass(IntSumReducer.class);
-        job3.setReducerClass(MovieFilterReducer.class);
+        job3.setReducerClass(GenreFilterReducer.class);
         job3.setMapOutputKeyClass(Text.class);
         job3.setMapOutputValueClass(Text.class);
         job3.setOutputKeyClass(Text.class);
         job3.setOutputValueClass(Text.class);
         FileInputFormat.addInputPath(job3, new Path(args[4]));
-        FileOutputFormat.setOutputPath(job3, new Path(args[5]));
+        FileOutputFormat.setOutputPath(job3, new Path(args[6]));
         System.exit(job3.waitForCompletion(true) ? 0 : 1);
 
         System.out.println("-----------Job3 Completed-----------");
 
 
+        /*
+        System.out.println("-----------Starting Job4------------");
 
+        Job job4 = Job.getInstance(conf3, "object filter");
+        job4.setJarByClass(ParsingProgram.class);
+        job4.setMapperClass(MovieFilterMapper.class);
+        //job.setCombinerClass(IntSumReducer.class);
+        job4.setReducerClass(MovieFilterReducer.class);
+        job4.setMapOutputKeyClass(Text.class);
+        job4.setMapOutputValueClass(Text.class);
+        job4.setOutputKeyClass(Text.class);
+        job4.setOutputValueClass(Text.class);
+        FileInputFormat.addInputPath(job4, new Path(args[4]));
+        FileOutputFormat.setOutputPath(job4, new Path(args[5]));
+        System.exit(job4.waitForCompletion(true) ? 0 : 1);
 
-
+        System.out.println("-----------Job4 Completed-----------");
+        */
     }
 
 }
